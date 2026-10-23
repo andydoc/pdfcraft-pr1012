@@ -2220,6 +2220,22 @@ signature pad	Type	พิมพ์
 	Resize panel window	ปรับขนาดหน้าต่างแผง
 	Tools	เครื่องมือ
 	Inspector	ตัวตรวจสอบ
+	Scan and text recognition	การสแกนและการรู้จำข้อความ
+	Searchable Image	รูปภาพที่ค้นหาข้อความได้
+	Corrected scan	ภาพสแกนที่แก้ไขแล้ว
+	Scan correction	การแก้ไขภาพสแกน
+	Automatically rotate sideways and upside-down pages	หมุนหน้าที่ตะแคงหรือกลับหัวโดยอัตโนมัติ
+	Straighten skewed scans	ปรับภาพสแกนที่เอียงให้ตรง
+	Add searchable text	เพิ่มข้อความที่ค้นหาได้
+	Uncertain orientations are left unchanged. Deskew fits the full image inside the page.	การวางแนวที่ไม่แน่ชัดจะไม่ถูกเปลี่ยน การปรับให้ตรงจะใส่ภาพทั้งหมดไว้ภายในหน้า
+	Correct scans	แก้ไขภาพสแกน
+	Scan processing cancelled	ยกเลิกการประมวลผลภาพสแกนแล้ว
+	; 1 page skipped	; ข้าม 1 หน้า
+	; {n} pages skipped	; ข้าม {n} หน้า
+	; corrected {n} pages	; แก้ไข {n} หน้า
+	Crop scanner borders to the paper edge	ครอบตัดขอบสแกนเนอร์ให้ถึงขอบกระดาษ
+	Safety margin (pt)	ระยะขอบปลอดภัย (pt)
+	Only clear paper edges are cropped. Indistinguishable white borders are kept.	ครอบตัดเฉพาะขอบกระดาษที่ชัดเจนเท่านั้น ขอบสีขาวที่แยกไม่ออกจะถูกเก็บไว้
 	PDF page: {size}	หน้า PDF: {size}
 	Match page at 100%	ให้ตรงกับหน้าที่ 100%
 	PDF scale: {scale}%	มาตราส่วน PDF: {scale}%
@@ -2593,6 +2609,7 @@ key	Space	Space
 	This document is trying to open a local file:	เอกสารนี้พยายามเปิดไฟล์ในเครื่อง:
 	Move tag earlier	ย้ายแท็กขึ้นก่อน
 	Move tag later	ย้ายแท็กลงทีหลัง
+	Straighten scanned page	ปรับหน้าที่สแกนให้ตรง
 @plural	{n} image optimized|{n} images optimized	ปรับรูปภาพให้เหมาะสมแล้ว {n} รูป
 @plural	{n} item discarded|{n} items discarded	ทิ้งไปแล้ว {n} รายการ
 @plural	{n} byte|{n} bytes	{n} ไบต์

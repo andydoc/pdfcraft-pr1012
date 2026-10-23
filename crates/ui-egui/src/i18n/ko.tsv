@@ -2372,6 +2372,22 @@ animation effects	Off	끄기
 	Page {n} of {total}	{n}/{total}페이지
 	Tools	도구
 	Inspector	검사기
+	Scan and text recognition	스캔 및 텍스트 인식
+	Searchable Image	검색 가능한 이미지
+	Corrected scan	보정된 스캔
+	Scan correction	스캔 보정
+	Automatically rotate sideways and upside-down pages	옆으로 눕거나 뒤집힌 페이지 자동 회전
+	Straighten skewed scans	기울어진 스캔 바로잡기
+	Add searchable text	검색 가능한 텍스트 추가
+	Uncertain orientations are left unchanged. Deskew fits the full image inside the page.	방향이 확실하지 않으면 그대로 둡니다. 기울기 보정은 전체 이미지를 페이지 안에 맞춥니다.
+	Correct scans	스캔 보정하기
+	Scan processing cancelled	스캔 처리 취소됨
+	; 1 page skipped	; 페이지 1개 건너뜀
+	; {n} pages skipped	; 페이지 {n}개 건너뜀
+	; corrected {n} pages	; 페이지 {n}개 보정됨
+	Crop scanner borders to the paper edge	스캐너 테두리를 용지 가장자리까지 자르기
+	Safety margin (pt)	안전 여백(pt)
+	Only clear paper edges are cropped. Indistinguishable white borders are kept.	뚜렷한 용지 가장자리만 자릅니다. 구별할 수 없는 흰색 테두리는 그대로 둡니다.
 	 on page {label}	 {label}페이지
 	A font isn't embedded	글꼴이 포함되어 있지 않습니다
 	A {} action isn't allowed	{} 동작은 허용되지 않습니다
@@ -2590,6 +2606,7 @@ certificate	SHA-256 digest	SHA-256 다이제스트
 	Minimize	최소화
 	Move tag earlier	태그를 앞으로 이동
 	Move tag later	태그를 뒤로 이동
+	Straighten scanned page	스캔한 페이지 바로잡기
 	Only allow this if you trust the source document.	원본 문서를 신뢰하는 경우에만 이를 허용하세요.
 	Open this local PDF?	이 로컬 PDF를 여시겠습니까?
 	Remove "{name}" from this list? The file itself is not deleted.	"{name}"을(를) 이 목록에서 제거하시겠습니까? 파일 자체는 삭제되지 않습니다.

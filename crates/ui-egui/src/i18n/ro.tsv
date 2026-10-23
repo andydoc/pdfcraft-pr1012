@@ -1598,6 +1598,22 @@
 	E-Sign	Semnătură electronică
 	Tools	Instrumente
 	Inspector	Inspector
+	Scan and text recognition	Scanare și recunoaștere text
+	Searchable Image	Imagine în care se poate căuta
+	Corrected scan	Scanare corectată
+	Scan correction	Corectare scanări
+	Automatically rotate sideways and upside-down pages	Rotire automată a paginilor întoarse lateral sau cu susul în jos
+	Straighten skewed scans	Îndreptare scanări înclinate
+	Add searchable text	Adăugare text în care se poate căuta
+	Uncertain orientations are left unchanged. Deskew fits the full image inside the page.	Orientările incerte rămân neschimbate. Îndreptarea încadrează întreaga imagine în pagină.
+	Correct scans	Corectare scanări
+	Scan processing cancelled	Procesarea scanărilor a fost anulată
+	; 1 page skipped	; 1 pagină omisă
+	; {n} pages skipped	; pagini omise: {n}
+	; corrected {n} pages	; pagini corectate: {n}
+	Crop scanner borders to the paper edge	Decupare margini scaner până la marginea hârtiei
+	Safety margin (pt)	Margine de siguranță (pt)
+	Only clear paper edges are cropped. Indistinguishable white borders are kept.	Se decupează doar marginile clare ale hârtiei. Marginile albe care nu se pot distinge se păstrează.
 	 on page {label}	 pe pagina {label}
 	A font isn't embedded	Un font nu este încorporat
 	A {} action isn't allowed	O acțiune {} nu este permisă
@@ -2605,6 +2621,7 @@ key	Space	Spațiu
 	This document is trying to open a local file:	Acest document încearcă să deschidă un fișier local:
 	Move tag earlier	Mutare etichetă mai devreme
 	Move tag later	Mutare etichetă mai târziu
+	Straighten scanned page	Îndreptare pagină scanată
 	4 x 6 in label (101.6 x 152.4 mm)	Etichetă 4 x 6 inch (101,6 x 152,4 mm)
 	Characters	Caractere
 	Characters without spaces	Caractere fără spații

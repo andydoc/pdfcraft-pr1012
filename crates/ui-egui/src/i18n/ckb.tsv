@@ -2405,6 +2405,7 @@ animation effects	Off	ناچالاک
 	This document is trying to open a local file:	ئەم بەڵگەنامەیە هەوڵی کردنەوەی فایلێکی ناوخۆیی دەدات:
 	Move tag earlier	گواستنەوەی تاگ بۆ پێشتر
 	Move tag later	گواستنەوەی تاگ بۆ دواتر
+	Straighten scanned page	ڕاستکردنەوەی پەڕەی سکانکراو
 
 # Historical snapshot notice bar (View signed version / View revision).
 	You are viewing the signed version of “{from}” (revision {rev}). It is a snapshot: changes here won't affect the original.	تۆ وەشانی واژووکراوی “{from}” دەبینیت (پێداچوونەوەی {rev}). ئەمە وێنەیەکی چەسپاوە: گۆڕانکارییەکانی لێرە کار لە ڕەسەنەکە ناکەن.
@@ -2475,6 +2476,22 @@ animation effects	Off	ناچالاک
 	Import	هاوردەکردن
 	Information	زانیاری
 	Inspector	پشکنەر
+	Scan and text recognition	سکانکردن و ناسینەوەی دەق
+	Searchable Image	وێنەی گەڕانپێکراو
+	Corrected scan	سکانی ڕاستکراوە
+	Scan correction	ڕاستکردنەوەی سکان
+	Automatically rotate sideways and upside-down pages	سووڕاندنەوەی خۆکاری ئەو پەڕانەی لاکەوتوون یان سەرەوخوارن
+	Straighten skewed scans	ڕاستکردنەوەی لاری سکانەکان
+	Add searchable text	زیادکردنی دەقی گەڕانپێکراو
+	Uncertain orientations are left unchanged. Deskew fits the full image inside the page.	ئاراستە نادڵنیاکان وەک خۆیان دەمێننەوە. ڕاستکردنەوەی لاری هەموو وێنەکە لەناو پەڕەکەدا جێدەکاتەوە.
+	Correct scans	ڕاستکردنەوەی سکانەکان
+	Scan processing cancelled	پرۆسەی سکان هەڵوەشێنرایەوە
+	; 1 page skipped	؛ 1 پەڕە تێپەڕێنرا
+	; {n} pages skipped	؛ {n} پەڕە تێپەڕێنران
+	; corrected {n} pages	؛ {n} پەڕە ڕاستکرانەوە
+	Crop scanner borders to the paper edge	بڕینەوەی لێواری سکانەر تا لێواری کاغەزەکە
+	Safety margin (pt)	پەراوێزی سەلامەتی (pt)
+	Only clear paper edges are cropped. Indistinguishable white borders are kept.	تەنها لێوارە ڕوونەکانی کاغەز دەبڕدرێنەوە. لێوارە سپییە جیانەکراوەکان دەهێڵدرێنەوە.
 	Key Agreement	ڕێککەوتنی کلیل
 	Key Encipherment	کۆدکردنی کلیل
 	Loading…	بارکردن…

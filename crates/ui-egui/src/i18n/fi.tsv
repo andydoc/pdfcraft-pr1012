@@ -2357,8 +2357,25 @@ animation effects	Off	Ei käytössä
 	This document is trying to open a local file:	Tämä asiakirja yrittää avata paikallisen tiedoston:
 	Move tag earlier	Siirrä tagia aiemmaksi
 	Move tag later	Siirrä tagia myöhemmäksi
+	Straighten scanned page	Suorista skannattu sivu
 	Tools	Työkalut
 	Inspector	Tarkastin
+	Scan and text recognition	Skannaus ja tekstintunnistus
+	Searchable Image	Haettava kuva
+	Corrected scan	Korjattu skannaus
+	Scan correction	Skannauksen korjaus
+	Automatically rotate sideways and upside-down pages	Kierrä kyljellään ja ylösalaisin olevat sivut automaattisesti
+	Straighten skewed scans	Suorista vinot skannaukset
+	Add searchable text	Lisää haettava teksti
+	Uncertain orientations are left unchanged. Deskew fits the full image inside the page.	Epävarmoja suuntia ei muuteta. Suoristus sovittaa koko kuvan sivun sisään.
+	Correct scans	Korjaa skannaukset
+	Scan processing cancelled	Skannausten käsittely peruttu
+	; 1 page skipped	; 1 sivu ohitettu
+	; {n} pages skipped	; {n} sivua ohitettu
+	; corrected {n} pages	; {n} sivua korjattu
+	Crop scanner borders to the paper edge	Rajaa skannerin reunat paperin reunaan
+	Safety margin (pt)	Turvamarginaali (pt)
+	Only clear paper edges are cropped. Indistinguishable white borders are kept.	Vain selvät paperin reunat rajataan. Erottumattomat valkoiset reunat säilytetään.
 	Save (M4)	Tallenna (M4)
 	Only the document's owner can change its security (open it with the permissions password)	Vain asiakirjan omistaja voi muuttaa sen suojausta (avaa se käyttöoikeussalasanalla)
 	Creator	Luontisovellus

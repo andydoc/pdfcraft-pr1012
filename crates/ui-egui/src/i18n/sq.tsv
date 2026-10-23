@@ -2216,6 +2216,22 @@ key	Space	Hapësirë
 	Sending to {printer}…	Po dërgohet te {printer}…
 	Float panel	Shkëput panelin
 	Inspector	Inspektori
+	Scan and text recognition	Skanimi dhe njohja e tekstit
+	Searchable Image	Imazh i kërkueshëm
+	Corrected scan	Skanim i korrigjuar
+	Scan correction	Korrigjimi i skanimit
+	Automatically rotate sideways and upside-down pages	Rrotullo automatikisht faqet anash dhe me kokë poshtë
+	Straighten skewed scans	Drejto skanimet e shtrembra
+	Add searchable text	Shto tekst të kërkueshëm
+	Uncertain orientations are left unchanged. Deskew fits the full image inside the page.	Orientimet e pasigurta lihen të pandryshuara. Drejtimi e përshtat të gjithë imazhin brenda faqes.
+	Correct scans	Korrigjo skanimet
+	Scan processing cancelled	Përpunimi i skanimeve u anulua
+	; 1 page skipped	; 1 faqe u anashkalua
+	; {n} pages skipped	; {n} faqe u anashkaluan
+	; corrected {n} pages	; u korrigjuan {n} faqe
+	Crop scanner borders to the paper edge	Prit buzët e skanerit deri te buza e letrës
+	Safety margin (pt)	Margjinë sigurie (pt)
+	Only clear paper edges are cropped. Indistinguishable white borders are kept.	Priten vetëm buzët e qarta të letrës. Buzët e bardha që nuk dallohen ruhen.
 	Move to group	Zhvendos te grupi
 	Panels	Panelet
 	Reset panel layout	Rivendos strukturën e paneleve
@@ -2352,6 +2368,7 @@ animation effects	Off	Joaktiv
 	This document is trying to open a local file:	Ky dokument po përpiqet të hapë një skedar lokal:
 	Move tag earlier	Zhvendose etiketën më herët
 	Move tag later	Zhvendose etiketën më vonë
+	Straighten scanned page	Drejto faqen e skanuar
 	Remove "{name}" from this list? The file itself is not deleted.	Të hiqet «{name}» nga kjo listë? Vetë skedari nuk fshihet.
 	Previous tab	Skeda e mëparshme
 # Untranslated: English text until a translator fills these in.

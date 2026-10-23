@@ -2371,6 +2371,22 @@ key	Space	Espai
 	Resize panel window	Canvia la mida de la finestra del tauler
 	Tools	Eines
 	Inspector	Inspector
+	Scan and text recognition	Escaneig i reconeixement de text
+	Searchable Image	Imatge amb text cercable
+	Corrected scan	Escaneig corregit
+	Scan correction	Correcció d'escanejos
+	Automatically rotate sideways and upside-down pages	Gira automàticament les pàgines de costat i cap per avall
+	Straighten skewed scans	Redreça els escanejos torts
+	Add searchable text	Afegeix text cercable
+	Uncertain orientations are left unchanged. Deskew fits the full image inside the page.	Les orientacions dubtoses no es modifiquen. El redreçament encabeix tota la imatge dins la pàgina.
+	Correct scans	Corregeix els escanejos
+	Scan processing cancelled	Processament d'escanejos cancel·lat
+	; 1 page skipped	; 1 pàgina omesa
+	; {n} pages skipped	; {n} pàgines omeses
+	; corrected {n} pages	; {n} pàgines corregides
+	Crop scanner borders to the paper edge	Escapça les vores de l'escàner fins a la vora del paper
+	Safety margin (pt)	Marge de seguretat (pt)
+	Only clear paper edges are cropped. Indistinguishable white borders are kept.	Només s'escapcen les vores clares del paper. Les vores blanques indistingibles es conserven.
 	Select page {label}	Selecciona la pàgina {label}
 	Rotate page {label} counterclockwise	Gira la pàgina {label} en sentit antihorari
 	Rotate page {label} clockwise	Gira la pàgina {label} en sentit horari
@@ -2458,6 +2474,7 @@ animation effects	Off	Desactivats
 	This document is trying to open a local file:	Aquest document intenta obrir un fitxer local:
 	Move tag earlier	Mou l'etiqueta cap amunt
 	Move tag later	Mou l'etiqueta cap avall
+	Straighten scanned page	Redreça la pàgina escanejada
 	Margins (in)	Marges (polz.)
 signature pad	Type	Escriu
 calendar date	January	Gener

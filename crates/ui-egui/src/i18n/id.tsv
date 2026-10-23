@@ -1589,6 +1589,22 @@
 	E-Sign	E-Sign
 	Tools	Alat
 	Inspector	Inspektur
+	Scan and text recognition	Pemindaian dan pengenalan teks
+	Searchable Image	Gambar yang Dapat Dicari
+	Corrected scan	Hasil pindaian yang dikoreksi
+	Scan correction	Koreksi pindaian
+	Automatically rotate sideways and upside-down pages	Putar otomatis halaman yang menyamping dan terbalik
+	Straighten skewed scans	Luruskan pindaian yang miring
+	Add searchable text	Tambahkan teks yang dapat dicari
+	Uncertain orientations are left unchanged. Deskew fits the full image inside the page.	Orientasi yang tidak pasti dibiarkan apa adanya. Pelurusan memuat seluruh gambar di dalam halaman.
+	Correct scans	Perbaiki pindaian
+	Scan processing cancelled	Pemrosesan pindaian dibatalkan
+	; 1 page skipped	; 1 halaman dilewati
+	; {n} pages skipped	; {n} halaman dilewati
+	; corrected {n} pages	; {n} halaman dikoreksi
+	Crop scanner borders to the paper edge	Potong tepi pemindai hingga tepi kertas
+	Safety margin (pt)	Margin pengaman (pt)
+	Only clear paper edges are cropped. Indistinguishable white borders are kept.	Hanya tepi kertas yang jelas yang dipotong. Tepi putih yang tidak dapat dibedakan tetap dipertahankan.
 	 on page {label}	 di halaman {label}
 	A font isn't embedded	Font tidak tertanam
 	A {} action isn't allowed	Tindakan {} tidak diizinkan
@@ -2591,6 +2607,7 @@ key	Space	Space
 	Minimize	Minimalkan
 	Move tag earlier	Pindahkan tag lebih awal
 	Move tag later	Pindahkan tag lebih lambat
+	Straighten scanned page	Luruskan halaman pindaian
 	Only allow this if you trust the source document.	Hanya izinkan ini jika Anda mempercayai dokumen sumber.
 	Open this local PDF?	Buka PDF lokal ini?
 	Remove "{name}" from this list? The file itself is not deleted.	Hapus "{name}" dari daftar ini? File itu sendiri tidak dihapus.

@@ -2372,6 +2372,22 @@ animation effects	Off	बंद
 	Page {n} of {total}	पृष्ठ {n} / {total}
 	Tools	उपकरण
 	Inspector	निरीक्षक
+	Scan and text recognition	स्कैन और टेक्स्ट पहचान
+	Searchable Image	सर्च योग्य छवि
+	Corrected scan	सुधारा गया स्कैन
+	Scan correction	स्कैन सुधार
+	Automatically rotate sideways and upside-down pages	किनारे की ओर मुड़े और उल्टे पृष्ठ अपने-आप घुमाएँ
+	Straighten skewed scans	तिरछे स्कैन सीधे करें
+	Add searchable text	सर्च योग्य टेक्स्ट जोड़ें
+	Uncertain orientations are left unchanged. Deskew fits the full image inside the page.	अनिश्चित दिशाएँ नहीं बदली जातीं। सीधा करने पर पूरी छवि पृष्ठ के अंदर समा जाती है।
+	Correct scans	स्कैन सुधारें
+	Scan processing cancelled	स्कैन प्रोसेसिंग रद्द की गई
+	; 1 page skipped	; 1 पृष्ठ छोड़ा गया
+	; {n} pages skipped	; {n} पृष्ठ छोड़े गए
+	; corrected {n} pages	; {n} पृष्ठ सुधारे गए
+	Crop scanner borders to the paper edge	स्कैनर के किनारे कागज़ के किनारे तक क्रॉप करें
+	Safety margin (pt)	सुरक्षा मार्जिन (pt)
+	Only clear paper edges are cropped. Indistinguishable white borders are kept.	केवल कागज़ के स्पष्ट किनारे क्रॉप किए जाते हैं। जिन सफ़ेद किनारों को अलग नहीं पहचाना जा सकता, वे रखे जाते हैं।
 	 on page {label}	 पृष्ठ {label} पर
 	A font isn't embedded	एक फ़ॉन्ट एम्बेड नहीं किया गया है
 	A {} action isn't allowed	{} क्रिया की अनुमति नहीं है
@@ -2590,6 +2606,7 @@ certificate	SHA-256 digest	SHA-256 डाइजेस्ट
 	Minimize	न्यूनतम करें
 	Move tag earlier	टैग पहले ले जाएँ
 	Move tag later	टैग बाद में ले जाएँ
+	Straighten scanned page	स्कैन किया गया पृष्ठ सीधा करें
 	Only allow this if you trust the source document.	इसे केवल तभी अनुमति दें जब आप स्रोत दस्तावेज़ पर भरोसा करें।
 	Open this local PDF?	यह स्थानीय पीडीएफ़ खोलें?
 	Remove "{name}" from this list? The file itself is not deleted.	"{name}" को इस सूची से हटाएँ? फ़ाइल स्वयं नहीं मिटती।
