@@ -33,6 +33,11 @@ pub struct OcrSettings {
     pub crop_margin: f64,
     /// Disable to straighten scans without adding a text layer.
     pub recognize: bool,
+    /// What counts as the page's text when `skip_text_pages` is on: only its own (page content
+    /// and form fields). Comments and text boxes are left out, and are not drawn into the picture
+    /// that is read, so a scan with a few comments on it is still a scan. `false`: everything
+    /// the page shows.
+    pub native_text_only: bool,
 }
 
 /// A recognised word whose box is at least this much covered by the page's own text is that
@@ -87,6 +92,7 @@ impl Default for OcrSettings {
             auto_crop: false,
             crop_margin: 2.0,
             recognize: true,
+            native_text_only: false,
         }
     }
 }
@@ -121,6 +127,11 @@ impl std::fmt::Debug for OcrPage {
 }
 
 impl OcrPage {
+    /// Words found on `page` of the document as `source` holds it, with no scan correction.
+    /// Applying it once the document has changed is refused, as for a run's own pages.
+    pub fn new(page: usize, words: Vec<PlacedWord>, source: Arc<Vec<u8>>) -> Self {
+        OcrPage { page, words, already_on_page: 0, skipped: None, correction: Correction::default(), crop: None, source }
+    }
     pub fn changed(&self) -> bool {
         self.correction.changed() || self.crop.is_some()
     }
@@ -189,7 +200,8 @@ impl OcrJob {
     }
 
     fn run_inner(&self, ocr: &Ocr, mut progress: impl FnMut(usize, usize) -> bool) -> Vec<OcrPage> {
-        let config = RenderConfig { password: self.password.as_deref().map(Arc::from), ..Default::default() };
+        let config =
+            RenderConfig { password: self.password.as_deref().map(Arc::from), hide_comments: self.settings.native_text_only, ..Default::default() };
         let mut r = PageRenderer::new(self.bytes.clone(), config);
         let mut out = Vec::new();
         let total = self.pages.len();
