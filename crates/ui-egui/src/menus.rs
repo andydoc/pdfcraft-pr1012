@@ -190,9 +190,11 @@ const PAGES: &[&str] = &[
     "page.crop",
     "page.boxes",
     "page.number",
+    "page.properties",
     SEP,
     "bookmark.add",
     "bookmark.from_structure",
+    "bookmark.from_text_styles",
 ];
 /// Sign ▸ Fill & Sign, with the short labels of the Fill & Sign toolbar.
 const FILL: &[(&str, &str)] = &[
