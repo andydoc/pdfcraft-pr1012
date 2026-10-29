@@ -37,16 +37,22 @@ fn recognize_text_dialog_adds_searchable_text() {
     let label = pdfcraft_engine::ocr::LANGUAGES.iter().find(|(code, _)| *code == expected).unwrap().1;
     h.get_by_value(label).click();
     h.run_steps(2);
-    for label in ["Nederlands", "Dansk", "Norsk bokmål", "Svenska", "Suomi", "Português", "Català", "繁體中文", "简体中文"] {
+    for label in ["Nederlands", "Dansk", "Norsk bokmål", "Svenska", "Suomi", "Português", "Català"] {
         h.get_by_label(label);
     }
+    // Chinese names are shown natively only when a CJK face is installed; English otherwise.
+    let shown = |h: &Harness<'_, PdfCraftApp>, native: &'static str, english: &'static str| {
+        if h.query_by_label(native).is_some() { native } else { english }
+    };
+    h.get_by_label(shown(&h, "繁體中文", "Traditional Chinese"));
+    let zh_hans = shown(&h, "简体中文", "Simplified Chinese");
     // The expanded language list scrolls when the popup reaches the window edge.
-    h.get_by_label("简体中文").scroll_to_me();
+    h.get_by_label(zh_hans).scroll_to_me();
     h.run_steps(4);
-    h.get_by_label("简体中文").click();
+    h.get_by_label(zh_hans).click();
     h.run_steps(2);
     assert_eq!(h.state().ocr_draft.language, "zh-Hans", "the last language in the list can be chosen");
-    h.get_by_value("简体中文").click();
+    h.get_by_value(zh_hans).click();
     h.run_steps(2);
     h.get_by_label("Català").scroll_to_me();
     h.run_steps(4);

@@ -147,10 +147,10 @@ pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> (boo
     group(ui, "Settings", &mut |ui| {
         egui::Grid::new("ocr-settings").num_columns(2).spacing([12.0, 8.0]).show(ui, |ui| {
             ui.label(tl!("Document language"));
-            let name = LANGUAGES.iter().find(|l| l.0 == d.language).map_or("English", |l| l.1);
+            let name = LANGUAGES.iter().find(|l| l.0 == d.language).map_or("English", |(code, name)| language_label(ui, code, name));
             craft_ui::ComboBox::from_id_salt("ocr-language").selected_text(tl!(name)).width(220.0).height(560.0).show_ui(ui, |ui| {
                 for (code, name) in LANGUAGES {
-                    ui.selectable_value(&mut d.language, (*code).to_string(), tl!(*name));
+                    ui.selectable_value(&mut d.language, (*code).to_string(), tl!(language_label(ui, code, name)));
                 }
             });
             ui.end_row();
@@ -621,6 +621,18 @@ fn failed(e: &str) -> String {
 /// the run's error: the run has to end either way, or it refuses every later one (#3919).
 fn recognize_guarded<T>(recognize: impl FnOnce() -> Result<T, String>) -> Result<T, String> {
     pdfcraft_engine::guard(recognize).unwrap_or_else(|panic| Err(failed(&panic)))
+}
+
+
+/// An OCR language's name in the picker: its own name when these fonts can draw it, otherwise its
+/// English name. With egui 0.37's default `MissingGlyphPolicy::Panic`, a native name whose script
+/// has no face (Japanese or Chinese without a CJK face) would otherwise abort while the list opens.
+fn language_label(ui: &egui::Ui, code: &'static str, native: &'static str) -> &'static str {
+    if super::js_ui::picker_text_is_drawable(ui, native) {
+        native
+    } else {
+        crate::i18n::Lang::from_code(code).map_or(code, crate::i18n::Lang::english_name)
+    }
 }
 
 #[cfg(test)]

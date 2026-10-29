@@ -328,7 +328,7 @@ pub(crate) const PREFERENCES_MIN_SCROLL: f32 = 60.0;
 /// Whether the interface can draw a language picker's native name. On the web the browser's glyph
 /// rasterizer draws scripts no embedded face has, so the native names stay; on native, ask the
 /// fonts this build installed (including an installed fallback face, unless system fonts are off).
-fn picker_text_is_drawable(ui: &egui::Ui, text: &str) -> bool {
+pub(crate) fn picker_text_is_drawable(ui: &egui::Ui, text: &str) -> bool {
     #[cfg(target_arch = "wasm32")]
     {
         let _ = (ui, text);
