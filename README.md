@@ -20,6 +20,13 @@
   macOS · Windows · Linux · FreeBSD · the web
 </p>
 
+> [!NOTE]
+> **This repository (andydoc/pdfcraft-pr1012) is a personal working copy of [storytold/pdfcraft](https://github.com/storytold/pdfcraft)**, used to build and test [PR #1012](https://github.com/storytold/pdfcraft/pull/1012). Report issues and send changes upstream.
+>
+> **Known build gaps in this copy** (upstream is not affected):
+> - **macOS:** GitHub does not start the macOS release job here because of an Actions billing limit on this account, so this copy publishes no macOS build.
+> - **FreeBSD aarch64:** the release job's FreeBSD VM could not install `cmake` from the FreeBSD ports mirror (29 Oct 2026). FreeBSD x86_64 builds and the FreeBSD CI workflow pass.
+
 <p align="center">
   <img alt="License: MIT OR Apache-2.0" src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-12a58a?style=flat-square">
   <img alt="Written in Rust" src="https://img.shields.io/badge/written%20in-Rust-0a7563?style=flat-square">
