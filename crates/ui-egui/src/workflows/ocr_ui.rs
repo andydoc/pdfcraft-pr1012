@@ -623,7 +623,6 @@ fn recognize_guarded<T>(recognize: impl FnOnce() -> Result<T, String>) -> Result
     pdfcraft_engine::guard(recognize).unwrap_or_else(|panic| Err(failed(&panic)))
 }
 
-
 /// An OCR language's name in the picker: its own name when these fonts can draw it, otherwise its
 /// English name. With egui 0.37's default `MissingGlyphPolicy::Panic`, a native name whose script
 /// has no face (Japanese or Chinese without a CJK face) would otherwise abort while the list opens.

@@ -2,9 +2,11 @@ version: 2
 updates:
   # Maintain Rust / Cargo dependencies
   - package-ecosystem: "cargo"
+    # Not /crates/filters/fuzz: it is detached from the workspace but path-depends on
+    # crates/filters, which inherits workspace.package, and Dependabot cannot resolve
+    # that workspace root from the fuzz directory (every cargo update job failed).
     directories:
       - "/"
-      - "/crates/filters/fuzz"
     schedule:
       interval: "daily"
       time: "06:00"
