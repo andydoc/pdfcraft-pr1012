@@ -11,6 +11,9 @@ updates:
       interval: "daily"
       time: "06:00"
       timezone: "America/New_York"
+    # Fork of storytold/pdfcraft: crate versions arrive with each upstream sync, so no version-bump
+    # PRs here (they diverge from upstream and break on API changes). 0 keeps security updates.
+    open-pull-requests-limit: 0
     # Consolidate updates into a single PR rather than one PR per crate
     groups:
       cargo-dependencies:
