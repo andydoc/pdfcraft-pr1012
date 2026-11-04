@@ -380,12 +380,14 @@ pub enum Edit {
         som: String,
         activity: String,
     },
-    /// Straighten the page content without resampling its images.
+    /// Scan & OCR ▸ Enhance scanned file: rotate `page`'s scan by `degrees` (at most 12 either
+    /// way) to straighten it, keeping the original image stream.
     DeskewPage {
         page: usize,
         degrees: f64,
     },
-    /// Scan & OCR: add invisible Unicode words over the page image.
+    /// Scan & OCR ▸ Recognize text: put recognised words on `page` as invisible text over the
+    /// image (from [`ocr::OcrJob::run`](crate::ocr::OcrJob::run)).
     AddOcrText {
         page: usize,
         words: Vec<pdfcraft_ocr::PlacedWord>,

@@ -1,5 +1,7 @@
 # Where PdfCraft falls short of Acrobat Pro
 
+> **Last reviewed:** 2026-11-02 · **Last updated:** 2026-11-02 · **Change:** minor (gap 7: skewed lines are read straightened, OCR typography repairs, apostrophe forms match in search; estimates unchanged)
+> **Last reviewed:** 2026-11-02 · **Last updated:** 2026-11-02 · **Change:** minor (gap 7: Catalan and horizontal Chinese listed, vertical Chinese missing; annotated skewed pages are recognized without deskew; estimates unchanged)
 > **Last reviewed:** 2026-10-25 · **Last updated:** 2026-10-25 · **Change:** minor (gaps 5 and 14 current state: native release Hans face via LXGW WenKai Lite; Arabic logical catalog, explicit RTL direction and mirrored stock chrome, with native/browser/IME workflows unqualified; no readiness re-estimate)
 > **Last reviewed:** 2026-10-15 · **Last updated:** 2026-10-15 · **Change:** minor (gap 3: #2517 a blank line stays a paragraph break; estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
 
@@ -172,16 +174,20 @@ update the numbers.
 
 ### 7. OCR still has language and scan-cleanup gaps
 
-- **Now available:** English, German, French, Spanish, Italian, Dutch, Danish, Norwegian Bokmål,
-  Swedish, Finnish, Portuguese and horizontal Japanese, Unicode search/copy,
+- **Now available:** English, German, French, Spanish, Catalan, Italian, Dutch, Danish, Norwegian
+  Bokmål, Swedish, Finnish, Portuguese, horizontal Japanese and horizontal traditional/simplified
+  Chinese (Chinese scan accuracy not yet measured), Unicode search/copy,
   automatic quarter-turn correction and deskew up to 12 degrees, including correction without OCR.
+  A skewed page with annotations is recognized but left unstraightened; lines skewed up to 20 degrees
+  are read straightened even without deskew. OCR repairs a few reliably confused characters per language
+  (dashes, German quotes, French/Italian/Catalan `l'`, Catalan `l·l`), and search matches `'` and `’`.
   Clear paper edges can now define an automatic crop with safety padding; ambiguous white borders
   stay unchanged, and original image pixels remain in the PDF.
-- **Missing:** additional language choices, vertical Japanese, reliable reading order and word spacing
+- **Missing:** additional language choices, vertical Japanese and Chinese, reliable reading order and word spacing
   across complex layouts, editable-text output, deskew on pages with annotations, despeckle, MRC
   compression, browser OCR and scanner input. Camera perspective
   and colour cleanup use the separate Enhance camera image command; broader photo fidelity remains open.
-- **Evidence:** `crates/engine/tests/it/scan_ocr.rs` and the OCR automation/UI tests; model tests require
+- **Evidence:** `crates/engine/tests/scan_ocr.rs` and the OCR automation/UI tests; model tests require
   `cargo xtask models`, Japanese fixture generation requires the release `CRAFT_FONTS_DIR` input.
 - **Impact:** scanned documents remain a core Pro workflow with wider language and layout demands.
 - **Estimate:** previous 40–75 h estimate needs reassessment after this narrower feature slice.

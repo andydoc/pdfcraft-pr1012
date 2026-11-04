@@ -245,6 +245,14 @@ fn group_layout(lines: &[TextLine], mixed: bool) -> Vec<TextBlock> {
             scanned
                 && (mixed || same_style(prev, line))
                 && same_plane(prev, line)
+                // A superscript or subscript run (a footnote marker, say) sits on the same visual
+                // row as the text around it, raised or lowered by `Ts` from the body baseline
+                // (#3252). That shift is typically up to half the body size, not the marker's own
+                // smaller size — but the wider tolerance only applies between a run and a
+                // distinctly smaller or larger one, with no horizontal overlap (`gap >= 0.0`):
+                // two equal-size runs can land within it too, at a baseline shift tight columns
+                // or compressed text (`Tz`) can produce between genuinely separate rows, and the
+                // original 20% tolerance is what keeps those apart.
                 && if mixed && invisible(prev) && invisible(line) {
                     // OCR fonts fit each word's ink box. Their synthetic baselines differ for
                     // words with descenders; require substantial vertical overlap instead.
@@ -254,14 +262,6 @@ fn group_layout(lines: &[TextLine], mixed: bool) -> Vec<TextBlock> {
                     let height = (a[3] - a[1]).min(b[3] - b[1]);
                     height > 0.0 && overlap > height * 0.5
                 } else {
-                    // A superscript or subscript run (a footnote marker, say) sits on the same visual
-                    // row as the text around it, raised or lowered by `Ts` from the body baseline
-                    // (#3252). That shift is typically up to half the body size, not the marker's own
-                    // smaller size — but the wider tolerance only applies between a run and a
-                    // distinctly smaller or larger one, with no horizontal overlap (`gap >= 0.0`):
-                    // two equal-size runs can land within it too, at a baseline shift tight columns
-                    // or compressed text (`Tz`) can produce between genuinely separate rows, and the
-                    // original 20% tolerance is what keeps those apart.
                     (prev.frame_origin().1 - line.frame_origin().1).abs() < prev.size.min(line.size) * 0.2
                         || (gap >= 0.0
                             && prev.size.min(line.size) < prev.size.max(line.size) * 0.9

@@ -32,12 +32,13 @@ struct FontResolver<'a> {
     metrics: &'a mut std::collections::BTreeMap<String, Metrics>,
     full_faces: HashMap<String, String>,
     programs: HashMap<String, Option<std::sync::Arc<Vec<u8>>>>,
-    /// Type 3 fonts whose glyphs draw nothing (OCR's searchable placeholders).
+    /// Type 3 resources whose glyphs are all empty: OCR's searchable placeholders.
     blank_fonts: std::collections::HashSet<String>,
 }
 
-/// Empty Type 3 char procedures are searchable placeholders, not usable visible glyphs.
-/// Inspect only small, bounded programs; arbitrary Type 3 artwork stays untouched.
+/// The page's Type 3 fonts whose char procedures only declare a width (`d0`/`d1`): searchable
+/// placeholders such as an OCR layer's, not usable visible glyphs. Only small, bounded programs
+/// are inspected; arbitrary Type 3 artwork is never treated as blank.
 fn blank_type3_fonts(doc: &Document, fonts: &Dict) -> std::collections::HashSet<String> {
     fonts
         .iter()
@@ -74,12 +75,13 @@ impl FontResolver<'_> {
             }
             return Ok(Some(resource.to_owned()));
         }
-        let blank = |name: &str| invisible(source) && self.blank_fonts.contains(name);
-        if !blank(&source.font) && self.metrics.get(&source.font).is_some_and(|metrics| source_encodes(metrics, text)) {
+        // An OCR word's blank placeholder font can encode the text but shows nothing.
+        let usable = |name: &str| !(invisible(source) && self.blank_fonts.contains(name));
+        if usable(&source.font) && self.metrics.get(&source.font).is_some_and(|metrics| source_encodes(metrics, text)) {
             return Ok(Some(source.font.clone()));
         }
         if let Some((name, _)) = self.metrics.iter().find(|(name, metrics)| {
-            !blank(name)
+            usable(name)
                 && pdfcraft_fonts::embedding::face_key(&metrics.base_font) == pdfcraft_fonts::embedding::face_key(&source.base_font)
                 && source_encodes(metrics, text)
         }) {
@@ -329,12 +331,12 @@ fn calibration_factors(
     metrics: &std::collections::BTreeMap<String, Metrics>,
     style: &BlockStyle,
     overrides: &HashMap<usize, &RangeStyle>,
-    chars: &[(char, usize, String)],
+    chars: &[StyledChar],
     space_of: impl Fn(&str, &Metrics) -> f64,
 ) -> HashMap<usize, f64> {
     let mut replacement_resources = HashMap::new();
     for (_, index, resource) in chars {
-        replacement_resources.entry(*index).or_insert(resource);
+        replacement_resources.entry(*index).or_insert(resource.as_str());
     }
     let mut calibration = HashMap::new();
     for (index, source) in lines.iter().enumerate() {
