@@ -108,8 +108,8 @@ impl Automation {
             .iter()
             .map(|p| match &p.skipped {
                 Some(why) => json!({ "page": p.page + 1, "skipped": why }),
-                None if copy => json!({ "page": p.page + 1, "words": p.words.len(), "already_on_page": p.already_on_page, "text": p.text(), "rotation": p.correction.rotation, "deskew": p.correction.deskew, "crop_box": p.crop }),
-                None => json!({ "page": p.page + 1, "words": p.words.len(), "already_on_page": p.already_on_page, "rotation": p.correction.rotation, "deskew": p.correction.deskew, "crop_box": p.crop }),
+                None if copy => json!({ "page": p.page + 1, "words": p.words.len(), "already_on_page": p.already_on_page, "text": p.text(), "rotation": p.correction.rotation, "deskew": p.correction.deskew, "deskew_skipped": p.deskew_skipped, "crop_box": p.crop }),
+                None => json!({ "page": p.page + 1, "words": p.words.len(), "already_on_page": p.already_on_page, "rotation": p.correction.rotation, "deskew": p.correction.deskew, "deskew_skipped": p.deskew_skipped, "crop_box": p.crop }),
             })
             .collect();
         Ok(json!({ "words": found.iter().map(|p| p.words.len()).sum::<usize>(), "pages": list }))

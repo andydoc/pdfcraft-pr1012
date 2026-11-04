@@ -40,6 +40,9 @@ pub struct OcrSettings {
     pub native_text_only: bool,
 }
 
+/// Skew below this many degrees is left alone.
+const MIN_DESKEW: f64 = 0.05;
+
 /// A recognised word whose box is at least this much covered by the page's own text is that
 /// text read again, not a word in a picture.
 const ALREADY_ON_PAGE: f32 = 0.5;
@@ -87,12 +90,12 @@ impl Default for OcrSettings {
             dpi: 300.0,
             language: "en".into(),
             skip_text_pages: true,
+            native_text_only: false,
             auto_rotate: true,
             deskew: true,
             auto_crop: false,
             crop_margin: 2.0,
             recognize: true,
-            native_text_only: false,
         }
     }
 }
@@ -109,6 +112,9 @@ pub struct OcrPage {
     pub correction: Correction,
     /// Detected crop in original PDF user space, before rotation and deskew; None if uncertain.
     pub crop: Option<[f64; 4]>,
+    /// The page was measured as skewed but has annotations, which straightening would misplace:
+    /// it is left unstraightened (`correction.deskew` is 0) while its words still line up.
+    pub deskew_skipped: bool,
     /// Snapshot guard: never apply positions to pages changed while recognition was running.
     source: Arc<Vec<u8>>,
 }
@@ -122,16 +128,18 @@ impl std::fmt::Debug for OcrPage {
             .field("skipped", &self.skipped)
             .field("correction", &self.correction)
             .field("crop", &self.crop)
+            .field("deskew_skipped", &self.deskew_skipped)
             .finish_non_exhaustive()
     }
 }
 
 impl OcrPage {
-    /// Words found on `page` of the document as `source` holds it, with no scan correction.
-    /// Applying it once the document has changed is refused, as for a run's own pages.
-    pub fn new(page: usize, words: Vec<PlacedWord>, source: Arc<Vec<u8>>) -> Self {
-        OcrPage { page, words, already_on_page: 0, skipped: None, correction: Correction::default(), crop: None, source }
+    /// A page read as `words`, without scan corrections, from the document bytes `source`;
+    /// [`crate::Session::apply_ocr`] refuses it once the document no longer has those bytes.
+    pub fn with_words(page: usize, words: Vec<PlacedWord>, source: Arc<Vec<u8>>) -> Self {
+        OcrPage { page, words, already_on_page: 0, skipped: None, correction: Correction::default(), crop: None, deskew_skipped: false, source }
     }
+
     pub fn changed(&self) -> bool {
         self.correction.changed() || self.crop.is_some()
     }
@@ -165,6 +173,8 @@ pub struct OcrJob {
     /// Per page: the render scale (pixels per point) that shows its images at their own
     /// resolution, if it has any.
     native: Vec<Option<f32>>,
+    /// Per page: whether it has annotations, which deskew refuses ([`crate::ocr_pdf::deskew`]).
+    annotated: Vec<bool>,
     pub pages: Vec<usize>,
     pub settings: OcrSettings,
 }
@@ -183,6 +193,7 @@ impl OcrJob {
                     skipped: Some(why.into()),
                     correction: Correction::default(),
                     crop: None,
+                    deskew_skipped: false,
                     source: self.bytes.clone(),
                 })
                 .collect()
@@ -217,6 +228,7 @@ impl OcrJob {
                 skipped: Some(why.into()),
                 correction: Correction::default(),
                 crop: None,
+                deskew_skipped: false,
                 source: self.bytes.clone(),
             };
             // The boxes of the page's own text (an earlier OCR layer's included), in view space.
@@ -302,7 +314,22 @@ impl OcrJob {
                 covered(rect, &existing) < ALREADY_ON_PAGE
             });
             let words = fresh.into_iter().map(|w| PlacedWord::place(w, to_user)).collect();
-            out.push(OcrPage { page, words, already_on_page: already.len(), skipped: None, correction, crop, source: self.bytes.clone() });
+            // Words are placed on the unstraightened page, so they line up either way; a page with
+            // annotations keeps its skew rather than failing the whole batch on DeskewPage.
+            let deskew_skipped = correction.deskew.abs() >= MIN_DESKEW && self.annotated.get(page).copied().unwrap_or(false);
+            if deskew_skipped {
+                correction.deskew = 0.0;
+            }
+            out.push(OcrPage {
+                page,
+                words,
+                already_on_page: already.len(),
+                skipped: None,
+                correction,
+                crop,
+                deskew_skipped,
+                source: self.bytes.clone(),
+            });
         }
         progress(total, total);
         out
@@ -343,7 +370,12 @@ impl Session {
                     .reduce(f32::max)
             })
             .collect();
-        Some(OcrJob { bytes: doc.bytes.clone(), password: doc.password.clone(), infos: doc.info.pages.clone(), native, pages, settings })
+        let annotated = doc
+            .editor
+            .as_ref()
+            .map(|e| pdfcraft_model::pages(&e.cos).iter().map(|p| crate::ocr_pdf::has_annotations(&e.cos, p)).collect())
+            .unwrap_or_default();
+        Some(OcrJob { bytes: doc.bytes.clone(), password: doc.password.clone(), infos: doc.info.pages.clone(), native, annotated, pages, settings })
     }
 
     /// Add the words found by [`OcrJob::run`] as one undoable step. Returns the number of words.
@@ -363,7 +395,7 @@ impl Session {
             if p.correction.rotation != 0 {
                 edits.push(Edit::RotatePages { pages: vec![p.page], degrees: i64::from(p.correction.rotation) });
             }
-            if p.correction.deskew.abs() >= 0.05 {
+            if p.correction.deskew.abs() >= MIN_DESKEW {
                 edits.push(Edit::DeskewPage { page: p.page, degrees: p.correction.deskew });
             }
         }

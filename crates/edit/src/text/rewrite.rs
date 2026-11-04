@@ -248,13 +248,13 @@ fn choose_rewrite_path(
         || members.iter().any(|line| line.font != first.font || line.size != first.size || line.color != first.color);
     let source_requires_styled_path =
         has_special_text || registered_face || text.is_some_and(|draft| source_program_completes(doc, fonts, first, draft)) || has_multiple_runs;
-    let explicit_styled_text = block.invisible || !style.ranges.is_empty() || style.resource.is_some();
+    let explicit_styled_text = !style.ranges.is_empty() || style.resource.is_some();
     Ok(RewriteDispatch {
         upright,
         use_styled_path: upright
             && !hebrew
             && !visual_indic
-            && (explicit_styled_text || (source_requires_styled_path && style.family.is_none() && style.bold.is_none())),
+            && (block.invisible || explicit_styled_text || (source_requires_styled_path && style.family.is_none() && style.bold.is_none())),
     })
 }
 

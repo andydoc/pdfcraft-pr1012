@@ -12,6 +12,7 @@ pub mod crop;
 mod lines;
 mod multilingual;
 pub mod scan;
+mod typography;
 
 pub use pdfcraft_fonts::helvetica_width;
 
@@ -91,9 +92,9 @@ pub struct Models {
 }
 
 impl Models {
-    /// A complete model pair in `dir`, preferring current ONNX files over legacy RTEN files,
-    /// when the multilingual models are there too.
-    /// An incomplete update never mixes formats or hides an intact legacy pair.
+    /// A complete model set in `dir`: the detection and recognition pair, preferring current ONNX
+    /// files over legacy RTEN files (an incomplete update never mixes formats or hides an intact
+    /// legacy pair), and the multilingual recognition, orientation and dictionary files.
     pub fn in_dir(dir: &Path) -> Option<Models> {
         if ![MULTILINGUAL_MODEL, ORIENTATION_MODEL, DICTIONARY].iter().all(|f| dir.join(f).is_file()) {
             return None;
@@ -223,20 +224,32 @@ impl Ocr {
         let input = self.engine.prepare_input(source).map_err(|e| OcrError::Recognize(e.to_string()))?;
         let found = self.engine.detect_words(&input).map_err(|e| OcrError::Recognize(e.to_string()))?;
         let boxes = self.engine.find_text_lines(&input, &found);
-        let rects = boxes
+        let lines: Vec<_> = boxes
             .into_iter()
             .map(|line| {
-                line.iter().map(|r| r.bounding_rect()).fold([f32::INFINITY, f32::INFINITY, 0.0f32, 0.0f32], |a, r| {
+                let rect = line.iter().map(|r| r.bounding_rect()).fold([f32::INFINITY, f32::INFINITY, 0.0f32, 0.0f32], |a, r| {
                     [a[0].min(r.left()), a[1].min(r.top()), a[2].max(r.right()), a[3].max(r.bottom())]
-                })
+                });
+                let directions: Vec<_> = line.iter().map(reading_direction).collect();
+                let corners: Vec<_> = line.iter().flat_map(|r| r.corners()).map(|p| [p.x, p.y]).collect();
+                let skewed = lines::LineBox::fit(&directions, &corners).filter(skewed_enough);
+                (rect, skewed)
             })
             .collect();
         // CJK's centred punctuation can split one horizontal line into several detections.
         // Join their geometry before padded crops reach the recognizer, avoiding duplicate ink.
-        let rects = if matches!(language, "zh-Hant" | "zh-Hans") { lines::join_fragments(rects) } else { rects };
+        let lines = if matches!(language, "zh-Hant" | "zh-Hans") {
+            lines::join_fragments(lines.into_iter().map(|(rect, _)| rect).collect()).into_iter().map(|rect| (rect, None)).collect()
+        } else {
+            lines
+        };
         let mut out = Vec::new();
-        for rect in rects {
-            let words = self.multilingual.read_line(image, rect, language)?;
+        for (rect, skewed) in lines {
+            let words = match skewed {
+                Some(line) => self.multilingual.read_skewed_line(image, &line, language)?,
+                None => self.multilingual.read_line(image, rect, language)?,
+            };
+            let words = typography::correct(words, language);
             if !words.is_empty() {
                 out.push(Line { words });
             }
@@ -247,6 +260,23 @@ impl Ocr {
     pub fn orientation(&self, image: &image::RgbImage) -> Result<u16, OcrError> {
         self.multilingual.orientation(image)
     }
+}
+
+/// Whether `line` is read straightened. Only when its baseline climbs more than a quarter of
+/// its height from end to end: below that its bounding box takes in no neighbours, and a short
+/// word's box angle is mostly noise. More than 20° is no line skew but a turned page, which
+/// orientation handles.
+fn skewed_enough(line: &lines::LineBox) -> bool {
+    let angle = line.angle().abs();
+    angle <= 20.0 && line.length() * angle.to_radians().sin() > 0.25 * line.height()
+}
+
+/// A detected word's reading direction and its length along it. The detector's boxes have
+/// no orientation, so this is whichever side is nearer horizontal.
+fn reading_direction(word: &rten_imageproc::RotatedRect) -> ([f32; 2], f32) {
+    let up = word.up_axis();
+    let side = up.perpendicular();
+    if side.x.abs() >= side.y.abs() { ([side.x, side.y], word.width()) } else { ([up.x, up.y], word.height()) }
 }
 
 /// A word placed on a page, in PDF user space: the bottom-left corner of its box, and the
@@ -456,18 +486,30 @@ mod tests {
         assert_eq!(w.up, [-10.0, 0.0]);
     }
 
-    /// The multilingual files every complete model directory also needs.
-    fn write_multilingual(dir: &std::path::Path) {
+    /// The multilingual recognition, orientation and dictionary files every model set needs.
+    fn multilingual_set(dir: &Path) {
         for file in [MULTILINGUAL_MODEL, ORIENTATION_MODEL, DICTIONARY] {
             std::fs::write(dir.join(file), b"model").unwrap();
         }
+    }
+
+    /// A complete pair is not enough without the multilingual files.
+    #[test]
+    fn model_discovery_needs_the_multilingual_files() {
+        let dir = tempfile::tempdir().unwrap();
+        for file in [DETECTION_MODEL, RECOGNITION_MODEL] {
+            std::fs::write(dir.path().join(file), b"model").unwrap();
+        }
+        assert_eq!(Models::in_dir(dir.path()), None);
+        multilingual_set(dir.path());
+        assert!(Models::in_dir(dir.path()).is_some());
     }
 
     /// The current ONNX pair wins when an installation also retains both legacy models.
     #[test]
     fn model_discovery_prefers_the_complete_onnx_pair() {
         let dir = tempfile::tempdir().unwrap();
-        write_multilingual(dir.path());
+        multilingual_set(dir.path());
         for file in ["text-detection.onnx", "text-recognition.onnx"] {
             std::fs::write(dir.path().join(file), b"model").unwrap();
         }
@@ -484,7 +526,7 @@ mod tests {
     fn model_discovery_falls_back_to_legacy_when_the_onnx_pair_is_incomplete() {
         for current in ["text-detection.onnx", "text-recognition.onnx"] {
             let dir = tempfile::tempdir().unwrap();
-            write_multilingual(dir.path());
+            multilingual_set(dir.path());
             for file in [current, "text-detection.rten", "text-recognition.rten"] {
                 std::fs::write(dir.path().join(file), b"model").unwrap();
             }
@@ -501,7 +543,7 @@ mod tests {
     fn model_discovery_refuses_mixed_format_pairs() {
         for pair in [["text-detection.onnx", "text-recognition.rten"], ["text-detection.rten", "text-recognition.onnx"]] {
             let dir = tempfile::tempdir().unwrap();
-            write_multilingual(dir.path());
+            multilingual_set(dir.path());
             for file in pair {
                 std::fs::write(dir.path().join(file), b"model").unwrap();
             }
@@ -513,7 +555,7 @@ mod tests {
     #[test]
     fn model_discovery_keeps_legacy_only_installations() {
         let dir = tempfile::tempdir().unwrap();
-        write_multilingual(dir.path());
+        multilingual_set(dir.path());
         assert_eq!(Models::in_dir(dir.path()), None);
         std::fs::write(dir.path().join("text-detection.rten"), b"model").unwrap();
         assert_eq!(Models::in_dir(dir.path()), None, "one legacy model is incomplete");

@@ -148,6 +148,32 @@ fn annotated_scan_refuses_deskew_atomically() {
     }
 }
 
+/// A skewed scan with a comment on it is still recognized: the run leaves that page unstraightened
+/// and says so, instead of failing the whole batch on DeskewPage.
+#[test]
+fn annotated_skewed_scan_is_recognized_without_deskew() {
+    if !ocr::available() {
+        return;
+    }
+    let sentence = (0..18).map(|_| "Straight lines make this scanned document easier to read.\n").collect::<String>();
+    let (mut s, id) = scan(&sentence, 0, 3.0);
+    s.apply(
+        id,
+        Edit::AddAnnotation(pdfcraft_engine::NewAnnotation {
+            page: 0,
+            shape: pdfcraft_engine::Shape::Rectangle { rect: [20.0, 20.0, 100.0, 50.0] },
+            style: Default::default(),
+            contents: "Keep this comment".into(),
+            author: "Test".into(),
+        }),
+    )
+    .unwrap();
+    let found = s.recognize_text(id, &[], OcrSettings { auto_rotate: false, ..Default::default() }).unwrap();
+    assert!(found[0].deskew_skipped && found[0].correction.deskew == 0.0, "{found:?}");
+    assert!(text(&s, id).contains("Straight"), "{:?}", text(&s, id));
+    assert_eq!(s.get(id).unwrap().can_undo(), Some("Recognize text"));
+}
+
 #[test]
 fn scan_correction_handles_all_quarter_turns_and_stale_results() {
     if !ocr::available() {
@@ -207,6 +233,25 @@ fn scan_recognizes_accents_in_requested_languages() {
         let found =
             s.recognize_text(id, &[], OcrSettings { language: language.into(), auto_rotate: false, deskew: false, ..Default::default() }).unwrap();
         assert!(text(&s, id).contains(expected), "{language}: {found:?}; extracted {:?}", text(&s, id));
+    }
+}
+
+#[test]
+fn skewed_lines_are_read_straightened_without_deskewing_the_page() {
+    if !ocr::available() {
+        return;
+    }
+    let sentence = "Quarterly invoice numbers match the signed delivery receipts.
+Warehouse staff confirmed every pallet before shipping.
+";
+    let (mut s, id) = scan(&sentence.repeat(6), 0, 4.0);
+    let found = s.recognize_text(id, &[], OcrSettings { auto_rotate: false, deskew: false, ..Default::default() }).unwrap();
+    assert_eq!(found[0].correction.deskew, 0.0, "{found:?}");
+    let extracted = text(&s, id);
+    // Read from their bounding boxes, these lines each take in their neighbours and nothing
+    // survives; straightened, the recognizer still slips now and then, so most is enough.
+    for expected in ["Quarterly", "invoice", "delivery", "receipts.", "Warehouse", "confirmed", "pallet", "shipping."] {
+        assert!(extracted.matches(expected).count() >= 4, "{expected:?} in {extracted:?}");
     }
 }
 
