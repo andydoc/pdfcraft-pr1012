@@ -47,6 +47,64 @@ fn settle(h: &mut Harness<'static, PdfCraftApp>) {
     h.run_steps(2);
 }
 
+/// GitHub's release list for this fork, newest first, as the API answers it.
+fn fork_list(tags: &[(&str, bool)]) -> String {
+    let items: Vec<String> = tags
+        .iter()
+        .map(|(tag, prerelease)| {
+            format!(r#"{{"tag_name":"{tag}","html_url":"https://github.com/andydoc/pdfcraft-pr1012/releases/tag/{tag}","draft":false,"prerelease":{prerelease},"assets":[]}}"#)
+        })
+        .collect();
+    format!("[{}]", items.join(","))
+}
+
+/// The check reads the fork's list, and a fork tag is a pre-release by semver: asking as upstream
+/// does would see none of them, and say "up to date" for ever.
+#[test]
+fn the_forks_pre_releases_are_offered_by_semver() {
+    use pdfcraft_ui_egui::updates::offered_by_fork;
+    let list = fork_list(&[("v0.18.2-pr1012", true), ("v0.18.1-pr1012.2", true), ("v0.18.1-pr1012", true)]);
+    let offered = |running: &str| offered_by_fork(&list, running).unwrap().map(|release| release.tag);
+    assert_eq!(offered("0.18.1-pr1012.2").as_deref(), Some("v0.18.2-pr1012"), "the next sync");
+    assert_eq!(offered("0.18.1").as_deref(), Some("v0.18.2-pr1012"), "a copy with no suffix");
+    assert_eq!(offered("0.18.2-pr1012"), None, "the one running");
+    assert_eq!(offered("0.18.3-pr1012"), None, "an older one");
+
+    let list = fork_list(&[("v0.18.2-pr1012.1", true), ("v0.18.2-pr1012", true)]);
+    let offered = offered_by_fork(&list, "0.18.2-pr1012").unwrap().map(|release| release.tag);
+    assert_eq!(offered.as_deref(), Some("v0.18.2-pr1012.1"), "a rebuild of the same base");
+}
+
+#[test]
+fn the_update_check_looks_in_the_fork() {
+    assert_eq!(pdfcraft_ui_egui::UPDATE_APP.repo, "andydoc/pdfcraft-pr1012");
+    assert!(pdfcraft_ui_egui::updates::RELEASES_PAGE.contains("andydoc/pdfcraft-pr1012"));
+    // A link out of the fork's own releases isn't one of its releases.
+    let list = r#"[{"tag_name":"v99.0.0","html_url":"https://github.com/storytold/pdfcraft/releases/tag/v99.0.0","draft":false,"prerelease":false,"assets":[]}]"#;
+    let offered = pdfcraft_ui_egui::updates::offered_by_fork(list, "0.18.2-pr1012").unwrap_or(None);
+    assert!(offered.is_none_or(|release| release.html_url.starts_with("https://github.com/andydoc/")));
+}
+
+/// An unsigned copy can't install an update (`craft_update::self_update::signed_like`), and a
+/// test build never shows the restart button anyway, so this asks the prompt itself.
+#[test]
+fn the_prompt_never_offers_to_update_and_restart() {
+    assert!(!pdfcraft_ui_egui::updates::download_prompt(release("v99.0.0")).is_self_updating);
+}
+
+#[test]
+fn download_opens_the_page_of_the_release_it_found() {
+    let mut h = harness(Ok(Some("v99.0.0")));
+    h.state_mut().execute("help.check_updates");
+    settle(&mut h);
+    assert!(h.query_by_label("UPDATE AND RESTART").is_none());
+    h.get_by_label("DOWNLOAD").click();
+    h.run_steps(3);
+    assert_eq!(h.state().last_opened_url, Some(release("v99.0.0").html_url), "the page of the release it found");
+    assert!(h.query_by_label_contains("is available").is_none(), "Download closes the prompt");
+    assert!(h.query_by_label_contains("is the newest version available").is_none(), "and says nothing else");
+}
+
 #[test]
 fn a_newer_release_is_offered_for_download() {
     let mut h = harness(Ok(Some("v99.0.0")));
