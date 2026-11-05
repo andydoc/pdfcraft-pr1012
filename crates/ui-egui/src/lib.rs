@@ -10,9 +10,11 @@
 #![recursion_limit = "256"]
 
 /// PdfCraft as craft-update knows it, with its 128 px icon and accent colour: the update
-/// prompt shows both, and an AppImage's menu entry gets the icon.
+/// prompt shows both, and an AppImage's menu entry gets the icon. This fork's copy looks for its
+/// releases in the fork: upstream's lack PR #1012's OCR and the fork's fixes (see `updates`).
 #[cfg(not(target_arch = "wasm32"))]
 pub const UPDATE_APP: craft_update::app::App = craft_update::app::App {
+    repo: "andydoc/pdfcraft-pr1012",
     icon_png: Some(include_bytes!("../../../assets/app-icon/hicolor/128x128/apps/ai.storyteller.pdfcraft.png")),
     accent: Some([0xb7, 0x02, 0x28]),
     ..craft_update::suite::PDFCRAFT
