@@ -523,11 +523,12 @@ impl PdfCraftApp {
             "export.text" => self.dialog = Some(Dialog::Export(crate::export_ui::ExportKind::Text)),
             "ocr.recognize" => {
                 self.ocr_draft.recognize = true;
-                // Plain recognition never crops; only Enhance scanned file turns it on.
+                // Plain recognition never crops; only Correct scanned pages turns it on.
                 self.ocr_draft.auto_crop = false;
                 self.dialog = Some(Dialog::RecognizeText);
             }
-            "ocr.enhance" => {
+            "ocr.enhance" => self.dialog = Some(Dialog::EnhanceScan),
+            "ocr.correct_scan" => {
                 self.ocr_draft.recognize = false;
                 self.ocr_draft.auto_crop = true;
                 self.dialog = Some(Dialog::RecognizeText);
@@ -707,6 +708,7 @@ impl PdfCraftApp {
             }
             fill if crate::fill_sign::FillTool::from_command(fill).is_some() => {
                 let Some(tool) = crate::fill_sign::FillTool::from_command(fill) else { return Some(false) };
+                self.fill_tool = tool;
                 self.quick_tool = crate::QuickTool::Fill(tool);
                 let initials = tool == crate::fill_sign::FillTool::Initials;
                 if (tool == crate::fill_sign::FillTool::Signature && self.signature.is_none()) || (initials && self.initials.is_none()) {
