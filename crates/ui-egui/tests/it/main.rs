@@ -38,6 +38,7 @@ mod control;
 mod create;
 mod date_format;
 mod dialog_chrome;
+mod dialog_on_monitor;
 mod document_links;
 mod editing;
 mod editor_taps;

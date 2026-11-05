@@ -259,7 +259,7 @@ pub(crate) fn keep_asking_while_probing(ctx: &egui::Context) {
 pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> (bool, bool) {
     /// What the dialog's title and buttons take, around the part that scrolls.
     const AROUND: f32 = 78.0;
-    /// The part that scrolls never gets shorter than this, however short the window.
+    /// The part that scrolls never gets shorter than this, however little of the window shows.
     const LEAST: f32 = 96.0;
     let pages = app.active_ids().and_then(|(_, id)| app.session.get(id)).map_or(1, |d| d.info.pages.len().max(1));
     let d = &mut app.ocr_draft;
@@ -267,7 +267,8 @@ pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> (boo
     d.from = d.from.clamp(1, d.to);
     ui.label(egui::RichText::new(tl!("Scan and text recognition")).font(theme::semibold(18.0)));
     ui.add_space(8.0);
-    // The buttons stay outside the scroll area: they are what has to stay in the window.
+    // The buttons stay outside the scroll area: on a window moved down its monitor they are what
+    // has to stay on the screen.
     let room = (widgets::dialog_room(ui.ctx()) - AROUND).max(LEAST);
     // The minimum as well: an area lays out in last frame's size, so a list that once scrolled would
     // otherwise never grow back. It still shrinks to what it holds.
