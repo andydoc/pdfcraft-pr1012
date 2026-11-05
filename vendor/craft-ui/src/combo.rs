@@ -657,9 +657,10 @@ fn side(popup: &Popup<'_>, remeasure: bool) -> (RectAlign, bool) {
 /// report a taskbar or dock.
 const MONITOR_FOOT: f32 = 48.0;
 
-/// The part of the window a menu can be seen in: a window moved down its monitor runs off it, and
-/// a menu that only keeps to the window runs off with it, out of reach and with no scroll bar.
-fn visible_area(ctx: &Context) -> Rect {
+/// The part of the window a menu or a dialog can be seen in: a window moved down its monitor runs
+/// off it, and a menu that only keeps to the window runs off with it, out of reach and with no
+/// scroll bar.
+pub fn visible_area(ctx: &Context) -> Rect {
     let screen = ctx.content_rect();
     let (inner, monitor, filling) = ctx.input(|i| {
         let v = i.viewport();

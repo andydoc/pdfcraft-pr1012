@@ -71,8 +71,8 @@ impl OcrDraft {
         }
     }
 
-    /// Recognize text in multiple files always adds text, even straight after Enhance scanned
-    /// file turned recognition off.
+    /// Recognize text in multiple files always adds text, even straight after Correct scanned
+    /// pages turned recognition off.
     pub fn batch_settings(&self) -> OcrSettings {
         OcrSettings { recognize: true, skip_text_pages: !self.text_pages, ..self.settings() }
     }
@@ -124,6 +124,10 @@ pub struct AutoOcr {
 }
 
 pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> (bool, bool) {
+    /// What the dialog's title and buttons take, around the part that scrolls.
+    const AROUND: f32 = 78.0;
+    /// The part that scrolls never gets shorter than this, however little of the window shows.
+    const LEAST: f32 = 96.0;
     let pages = app.active_ids().and_then(|(_, id)| app.session.get(id)).map_or(1, |d| d.info.pages.len().max(1));
     let available = pdfcraft_engine::ocr::available();
     let d = &mut app.ocr_draft;
@@ -131,6 +135,38 @@ pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> (boo
     d.from = d.from.clamp(1, d.to);
     ui.label(egui::RichText::new(tl!("Scan and text recognition")).font(theme::semibold(18.0)));
     ui.add_space(8.0);
+    // The buttons stay outside the scroll area: on a window moved down its monitor they are what
+    // has to stay on the screen.
+    let room = (widgets::dialog_room(ui.ctx()) - AROUND).max(LEAST);
+    // The minimum as well: an area lays out in last frame's size, so a list that once scrolled would
+    // otherwise never grow back. It still shrinks to what it holds.
+    let area = egui::ScrollArea::vertical().id_salt("ocr-settings").max_height(room).min_scrolled_height(room);
+    area.auto_shrink([false, true]).show(ui, |ui| {
+        settings(ui, d, pages, available, t);
+    });
+    ui.add_space(6.0);
+    let (mut go, mut cancel) = (false, false);
+    ui.horizontal(|ui| {
+        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+            if ui
+                .add_enabled_ui(available, |ui| {
+                    widgets::pill_button(ui, if d.recognize { tl!("Recognize text") } else { tl!("Correct scans") }, true)
+                })
+                .inner
+                .clicked()
+            {
+                go = true;
+            }
+            if widgets::pill_button(ui, tl!("Cancel"), false).clicked() {
+                cancel = true;
+            }
+        })
+    });
+    (go, cancel)
+}
+
+/// What the dialog asks, between its title and its buttons.
+fn settings(ui: &mut egui::Ui, d: &mut OcrDraft, pages: usize, available: bool, t: &Tokens) {
     let group = |ui: &mut egui::Ui, title: &str, body: &mut dyn FnMut(&mut egui::Ui)| {
         ui.label(egui::RichText::new(tl!(title)).font(theme::semibold(13.0)));
         egui::Frame::new().fill(t.hover).corner_radius(egui::CornerRadius::same(6)).inner_margin(egui::Margin::same(10)).show(ui, |ui| {
@@ -210,25 +246,6 @@ pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> (boo
         );
         ui.add_space(6.0);
     }
-    ui.add_space(6.0);
-    let (mut go, mut cancel) = (false, false);
-    ui.horizontal(|ui| {
-        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-            if ui
-                .add_enabled_ui(available, |ui| {
-                    widgets::pill_button(ui, if d.recognize { tl!("Recognize text") } else { tl!("Correct scans") }, true)
-                })
-                .inner
-                .clicked()
-            {
-                go = true;
-            }
-            if widgets::pill_button(ui, tl!("Cancel"), false).clicked() {
-                cancel = true;
-            }
-        })
-    });
-    (go, cancel)
 }
 
 impl PdfCraftApp {
@@ -715,12 +732,12 @@ mod tests {
         app.session.apply(id, add).unwrap();
         assert_eq!(found(&mut app), Some(0), "a picture over the page makes it a scan");
     }
-    /// Enhance scanned file turns recognition off in the shared draft; a batch run started after it
+    /// Correct scanned pages turns recognition off in the shared draft; a batch run started after it
     /// still adds text, and skips pages with text unless the dialog says otherwise.
     #[test]
-    fn batch_recognition_adds_text_after_enhance_scanned_file() {
+    fn batch_recognition_adds_text_after_correct_scanned_pages() {
         let mut app = app_with(scan());
-        assert!(app.execute("ocr.enhance"));
+        assert!(app.execute("ocr.correct_scan"));
         assert!(!app.ocr_draft.settings().recognize);
         let batch = app.ocr_draft.batch_settings();
         assert!(batch.recognize && batch.skip_text_pages, "{batch:?}");

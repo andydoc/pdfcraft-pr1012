@@ -47,6 +47,64 @@ fn settle(h: &mut Harness<'static, PdfCraftApp>) {
     h.run_steps(2);
 }
 
+/// GitHub's release list for this fork, newest first, as the API answers it.
+fn fork_list(tags: &[(&str, bool)]) -> String {
+    let items: Vec<String> = tags
+        .iter()
+        .map(|(tag, prerelease)| {
+            format!(r#"{{"tag_name":"{tag}","html_url":"https://github.com/andydoc/pdfcraft-pr1012/releases/tag/{tag}","draft":false,"prerelease":{prerelease},"assets":[]}}"#)
+        })
+        .collect();
+    format!("[{}]", items.join(","))
+}
+
+/// The check reads the fork's list, and a fork tag is a pre-release by semver: asking as upstream
+/// does would see none of them, and say "up to date" for ever.
+#[test]
+fn the_forks_pre_releases_are_offered_by_semver() {
+    use pdfcraft_ui_egui::updates::offered_by_fork;
+    let list = fork_list(&[("v0.18.2-pr1012", true), ("v0.18.1-pr1012.2", true), ("v0.18.1-pr1012", true)]);
+    let offered = |running: &str| offered_by_fork(&list, running).unwrap().map(|release| release.tag);
+    assert_eq!(offered("0.18.1-pr1012.2").as_deref(), Some("v0.18.2-pr1012"), "the next sync");
+    assert_eq!(offered("0.18.1").as_deref(), Some("v0.18.2-pr1012"), "a copy with no suffix");
+    assert_eq!(offered("0.18.2-pr1012"), None, "the one running");
+    assert_eq!(offered("0.18.3-pr1012"), None, "an older one");
+
+    let list = fork_list(&[("v0.18.2-pr1012.1", true), ("v0.18.2-pr1012", true)]);
+    let offered = offered_by_fork(&list, "0.18.2-pr1012").unwrap().map(|release| release.tag);
+    assert_eq!(offered.as_deref(), Some("v0.18.2-pr1012.1"), "a rebuild of the same base");
+}
+
+#[test]
+fn the_update_check_looks_in_the_fork() {
+    assert_eq!(pdfcraft_ui_egui::UPDATE_APP.repo, "andydoc/pdfcraft-pr1012");
+    assert!(pdfcraft_ui_egui::updates::RELEASES_PAGE.contains("andydoc/pdfcraft-pr1012"));
+    // A link out of the fork's own releases isn't one of its releases.
+    let list = r#"[{"tag_name":"v99.0.0","html_url":"https://github.com/storytold/pdfcraft/releases/tag/v99.0.0","draft":false,"prerelease":false,"assets":[]}]"#;
+    let offered = pdfcraft_ui_egui::updates::offered_by_fork(list, "0.18.2-pr1012").unwrap_or(None);
+    assert!(offered.is_none_or(|release| release.html_url.starts_with("https://github.com/andydoc/")));
+}
+
+/// An unsigned copy can't install an update (`craft_update::self_update::signed_like`), and a
+/// test build never shows the restart button anyway, so this asks the prompt itself.
+#[test]
+fn the_prompt_never_offers_to_update_and_restart() {
+    assert!(!pdfcraft_ui_egui::updates::download_prompt(release("v99.0.0")).is_self_updating);
+}
+
+#[test]
+fn download_opens_the_page_of_the_release_it_found() {
+    let mut h = harness(Ok(Some("v99.0.0")));
+    h.state_mut().execute("help.check_updates");
+    settle(&mut h);
+    assert!(h.query_by_label("UPDATE AND RESTART").is_none());
+    h.get_by_label("DOWNLOAD").click();
+    h.run_steps(3);
+    assert_eq!(h.state().last_opened_url, Some(release("v99.0.0").html_url), "the page of the release it found");
+    assert!(h.query_by_label_contains("is available").is_none(), "Download closes the prompt");
+    assert!(h.query_by_label_contains("is the newest version available").is_none(), "and says nothing else");
+}
+
 #[test]
 fn a_newer_release_is_offered_for_download() {
     let mut h = harness(Ok(Some("v99.0.0")));
@@ -98,6 +156,93 @@ fn nothing_is_asked_until_the_user_checks() {
     settle(&mut h);
     assert_eq!(calls.load(std::sync::atomic::Ordering::SeqCst), 1);
     h.get_by_label_contains("PdfCraft 99.0.0 is available");
+}
+
+/// The desktop app's start, with `settings` restored, and the count of what the source was asked.
+fn started_with(settings: &'static str) -> (Harness<'static, PdfCraftApp>, Arc<std::sync::atomic::AtomicUsize>) {
+    let calls = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let counted = calls.clone();
+    let h = Harness::builder().with_size(egui::vec2(1200.0, 800.0)).build_eframe(move |_cc| {
+        let mut app = PdfCraftApp::new();
+        app.set_option("language", "en").unwrap();
+        app.set_startup_update_check(true);
+        app.restore(settings);
+        let counted = counted.clone();
+        app.set_update_source(Arc::new(move || {
+            counted.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            Ok(Some(release("v99.0.0")))
+        }));
+        app
+    });
+    (h, calls)
+}
+
+/// Run frames for `time`, or until the source has been asked. The check at start shows nothing
+/// while it runs, so `settle` can't wait for it.
+fn run_until_asked(h: &mut Harness<'static, PdfCraftApp>, calls: &std::sync::atomic::AtomicUsize, time: std::time::Duration) {
+    let deadline = std::time::Instant::now() + time;
+    while calls.load(std::sync::atomic::Ordering::SeqCst) == 0 && std::time::Instant::now() < deadline {
+        h.run_steps(2);
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+}
+
+#[test]
+fn the_preference_keeps_the_check_at_start_from_reaching_the_network() {
+    use std::sync::atomic::Ordering::SeqCst;
+    assert!(PdfCraftApp::new().update_check_at_start, "on by default");
+
+    // The same start with the preference left on does ask, so a count of none below means
+    // the preference held the check back and not that it hadn't run yet.
+    let (mut h, calls) = started_with("{}");
+    run_until_asked(&mut h, &calls, std::time::Duration::from_secs(30));
+    assert_eq!(calls.load(SeqCst), 1, "on, the app asks at start");
+
+    let (mut h, calls) = started_with(r#"{"update_check_at_start": false}"#);
+    run_until_asked(&mut h, &calls, std::time::Duration::from_millis(500));
+    assert_eq!(calls.load(SeqCst), 0, "nothing is asked at start");
+
+    let mut restarted = PdfCraftApp::new();
+    restarted.restore(&h.state().persist());
+    assert!(!restarted.update_check_at_start, "the choice is kept");
+
+    // Help ▸ Check for updates still asks.
+    h.state_mut().execute("help.check_updates");
+    settle(&mut h);
+    assert_eq!(calls.load(SeqCst), 1);
+    h.get_by_label_contains("PdfCraft 99.0.0 is available");
+}
+
+/// The setting is about starting: turning it on asks nothing until the next start.
+#[test]
+fn turning_the_check_at_start_on_waits_for_the_next_start() {
+    use std::sync::atomic::Ordering::SeqCst;
+    let (mut h, calls) = started_with(r#"{"update_check_at_start": false}"#);
+    h.run_steps(3);
+    h.state_mut().set_option("update_check_at_start", "true").unwrap();
+    run_until_asked(&mut h, &calls, std::time::Duration::from_millis(500));
+    assert_eq!(calls.load(SeqCst), 0, "nothing is asked this session");
+}
+
+#[test]
+fn preferences_turn_the_check_at_start_off() {
+    let (mut h, _calls) = started_with(r#"{"update_check_at_start": true}"#);
+    h.state_mut().execute("app.preferences");
+    h.run_steps(3);
+    h.get_by_label("Check for updates when PdfCraft starts").click();
+    h.run_steps(3);
+    assert!(!h.state().update_check_at_start);
+    // The control channel's option, as an agent sets it.
+    h.state_mut().set_option("update_check_at_start", "true").unwrap();
+    assert!(h.state().update_check_at_start);
+    assert!(h.state_mut().set_option("update_check_at_start", "maybe").is_err());
+}
+
+#[test]
+fn settings_from_the_old_opt_in_leave_the_check_at_start_on() {
+    let mut app = PdfCraftApp::new();
+    app.restore(r#"{"check_updates_at_start": false}"#);
+    assert!(app.update_check_at_start, "a key of the removed option decides nothing");
 }
 
 #[test]

@@ -28,9 +28,18 @@ fn dialog_frame(ctx: &egui::Context) -> egui::Frame {
         .shadow(ctx.global_style().visuals.window_shadow)
 }
 
-/// A modal with the card fill, a 10-point corner and room around its contents.
+/// A modal with the card fill, a 10-point corner and room around its contents, centred in the part
+/// of the window the monitor shows: a window moved down its monitor would put the middle of the
+/// window, and a dialog's buttons, off the screen.
 pub fn modal(ctx: &egui::Context, id: impl std::hash::Hash + std::fmt::Debug) -> egui::Modal {
-    egui::Modal::new(egui::Id::unique(id)).frame(dialog_frame(ctx))
+    let id = egui::Id::unique(id);
+    let drop = craft_ui::combo::visible_area(ctx).center().y - ctx.content_rect().center().y;
+    egui::Modal::new(id).area(egui::Modal::default_area(id).anchor(Align2::CENTER_CENTER, vec2(0.0, drop))).frame(dialog_frame(ctx))
+}
+
+/// The height the contents of a [`modal`] can take in the part of the window the monitor shows.
+pub fn dialog_room(ctx: &egui::Context) -> f32 {
+    (craft_ui::combo::visible_area(ctx).height() - 2.0 * f32::from(DIALOG_PAD_Y)).max(0.0)
 }
 
 /// Show [`modal`], outline its controls, and remember the card rect for layout checks.
