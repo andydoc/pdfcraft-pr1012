@@ -130,6 +130,10 @@ incremental = false
 lto = "thin"
 codegen-units = 1
 
+# Dropdown lists stop at the foot of the monitor (see vendor/README.md); meant to go upstream.
+[patch."https://github.com/storytold/craft-libs"]
+craft-ui = { path = "vendor/craft-ui" }
+
 # Vendored, patched third-party crates (see vendor/README.md). Each patch is meant to go upstream.
 [patch.crates-io]
 hayro-interpret = { path = "vendor/hayro-interpret" }

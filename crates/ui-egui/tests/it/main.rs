@@ -51,6 +51,7 @@ mod javascript;
 mod layer_actions;
 mod links;
 mod marks;
+mod menu_on_monitor;
 mod object_selection;
 mod ocr;
 mod open_action;
