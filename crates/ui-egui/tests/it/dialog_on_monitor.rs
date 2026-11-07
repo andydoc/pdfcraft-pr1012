@@ -11,10 +11,10 @@ use pdfcraft_ui_egui::PdfCraftApp;
 const WINDOW: egui::Vec2 = egui::vec2(1368.0, 740.0);
 const MONITOR: egui::Vec2 = egui::vec2(1536.0, 864.0);
 /// Tall enough for all the dialog asks, with or without the note that text recognition isn't
-/// installed: tests run with or without its model files, and the note is what the default window
-/// has no room for.
-const TALL_WINDOW: egui::Vec2 = egui::vec2(1368.0, 860.0);
-const TALL_MONITOR: egui::Vec2 = egui::vec2(1536.0, 1080.0);
+/// installed: tests run with or without its model files. Title to buttons took 1169 points with the
+/// models and 1207 without when this was measured, so it scrolls on a 1080-line monitor.
+const TALL_WINDOW: egui::Vec2 = egui::vec2(1368.0, 1300.0);
+const TALL_MONITOR: egui::Vec2 = egui::vec2(1536.0, 1400.0);
 /// What a window that doesn't fill its monitor leaves free at the foot (`combo::MONITOR_FOOT`).
 const FOOT: f32 = 48.0;
 
@@ -58,7 +58,7 @@ fn buttons_bottom(h: &Harness<'static, PdfCraftApp>) -> f32 {
 fn has_scroll_bar(h: &Harness<'static, PdfCraftApp>) -> bool {
     // The document's own scroll bars are behind the dialog: this one is inside the dialog's width.
     let title = h.get_by_label("Scan and text recognition").rect();
-    h.get_all_by_role(egui::Role::ScrollBar).any(|bar| bar.rect().left() > title.left() && bar.rect().right() < title.left() + 540.0)
+    h.query_all_by_role(egui::Role::ScrollBar).any(|bar| bar.rect().left() > title.left() && bar.rect().right() < title.left() + 540.0)
 }
 
 #[test]
@@ -100,7 +100,7 @@ fn a_window_with_room_shows_the_whole_dialog_with_nothing_to_scroll() {
 
 #[test]
 fn a_dialog_that_had_to_scroll_grows_back_when_the_window_is_maximized() {
-    let mut h = dialog_in(TALL_WINDOW, MONITOR, 240.0);
+    let mut h = dialog_in(TALL_WINDOW, TALL_MONITOR, 240.0);
     assert!(has_scroll_bar(&h), "the window runs off the monitor");
     let info = h.input_mut().viewports.entry(egui::ViewportId::ROOT).or_default();
     info.maximized = Some(true);
