@@ -76,8 +76,9 @@ fn crop_scanner_borders_preserves_pixels_rotation_text_and_undo() {
         s.redo(id).unwrap();
         assert_eq!(after.width, s.get(id).unwrap().info.pages[0].width);
         // Correction-only file processing must save the crop even with zero recognized words.
-        let file = ocr::recognize_file("scan.pdf", before.clone(), None, settings, &ocr::recognizers(&OcrSettings::default()).unwrap(), |_, _| true)
-            .unwrap();
+        let file =
+            ocr::recognize_file("scan.pdf", before.clone(), None, settings, &ocr::recognizers(&OcrSettings::default()).unwrap(), false, |_, _| true)
+                .unwrap();
         assert_ne!(file.bytes, before);
         assert_eq!(file.words(), 0);
         let crop_only = s.open("file.pdf", None, file.bytes, None).unwrap();
