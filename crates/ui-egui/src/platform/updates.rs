@@ -54,11 +54,12 @@ pub(crate) struct Updates {
 impl Updates {
     /// The prompt that offers a newer release, after the check at start or Help ▸ Check for
     /// updates, is open over the whole window. It isn't the Updates dialog (`open`), and it leaves
-    /// the menus on.
+    /// the menus on. In this fork that is the download prompt ([`download_prompt`]); the
+    /// `Updater`'s own prompt is counted too, in case it ever opens.
     pub(crate) fn prompt_open(&self) -> bool {
         #[cfg(not(target_arch = "wasm32"))]
         {
-            self.updater.prompt_open()
+            self.prompt.is_some() || self.updater.prompt_open()
         }
         #[cfg(target_arch = "wasm32")]
         {
