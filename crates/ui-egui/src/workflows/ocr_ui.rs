@@ -266,8 +266,10 @@ pub(crate) fn keep_asking_while_probing(ctx: &egui::Context) {
 pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> (bool, bool) {
     /// What the dialog's title and buttons take, around the part that scrolls.
     const AROUND: f32 = 78.0;
-    /// The part that scrolls never gets shorter than this, however short the window.
-    const LEAST: f32 = 96.0;
+    /// The part that scrolls never gets shorter than this, however short the window: small enough
+    /// that the title and the buttons still fit the smallest window at the largest interface size
+    /// (173 pt), as upstream #6599 measured.
+    const LEAST: f32 = 40.0;
     let pages = app.active_ids().and_then(|(_, id)| app.session.get(id)).map_or(1, |d| d.info.pages.len().max(1));
     let d = &mut app.ocr_draft;
     d.to = d.to.clamp(1, pages);
