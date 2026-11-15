@@ -9431,8 +9431,8 @@ fn ocr_enhance_crops_paper_edges_with_margin_and_undo() {
     if ok(&mut a, "ocr_status", json!({}))["available"] != true {
         return;
     }
-    let image = image::RgbImage::from_fn(800, 600, |x, y| image::Rgb(if (180..800).contains(&x) && y < 490 { [235; 3] } else { [25; 3] }));
-    image.save(dir.join("scan.png")).unwrap();
+    let rgb = (0..600u32).flat_map(|y| (0..800u32).flat_map(move |x| [if (180..800).contains(&x) && y < 490 { 235 } else { 25 }; 3])).collect();
+    std::fs::write(dir.join("scan.png"), encode_png(800, 600, craft_image_codecs::ChannelLayout::Rgb, rgb)).unwrap();
     let doc = ok(&mut a, "doc_create", json!({"from":"images","paths":["scan.png"]}))["doc"].as_u64().unwrap();
     let no_crop = ok(&mut a, "ocr_enhance", json!({"doc":doc,"auto_crop":false,"rotate_pages":false,"straighten_pages":false}));
     assert!(no_crop["pages"][0]["crop_box"].is_null());
