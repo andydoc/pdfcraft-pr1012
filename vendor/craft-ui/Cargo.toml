@@ -1,4 +1,4 @@
-# storytold/craft-libs `crates/ui` at 787a7a0f972fd1d7a7618fdbeca3a5267a0407ff, flattened out of its
+# storytold/craft-libs `crates/ui` at e2dc681a3ad8a47038da2f11ddd2c5e1c0454991, flattened out of its
 # workspace: version, edition, licence, repository, rust-version, lints and the three workspace
 # dependencies are spelled out here. The `tests` and `examples` folders are not carried (they hold
 # fonts and PNGs, which this repository does not take), so the test and example targets and the
@@ -26,8 +26,8 @@ dbg_macro = "warn"
 todo = "warn"
 
 [dependencies]
-craft-fonts-build = { git = "https://github.com/storytold/craft-libs", version = "0.1.0", rev = "787a7a0f972fd1d7a7618fdbeca3a5267a0407ff" }
-craft-i18n = { git = "https://github.com/storytold/craft-libs", version = "0.1.0", rev = "787a7a0f972fd1d7a7618fdbeca3a5267a0407ff" }
+craft-fonts-build = { git = "https://github.com/storytold/craft-libs", version = "0.1.0", rev = "e2dc681a3" }
+craft-i18n = { git = "https://github.com/storytold/craft-libs", version = "0.1.0", rev = "e2dc681a3" }
 egui = { version = "0.37", default-features = false }
 epaint = { version = "0.37", default-features = false }
 log = "0.4"
