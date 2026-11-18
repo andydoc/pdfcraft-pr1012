@@ -46,6 +46,11 @@ allow-git = [
 [advisories]
 yanked = "warn"
 ignore = [
+    # Marvin (RSA private-key timing side channel, no fixed `rsa` release). pdfcraft-sign uses
+    # `rsa` only for public-key signature verification, which the advisory does not affect; RSA
+    # private-key operations use aws-lc-rs on native targets and are refused in the browser
+    # (ADR-0009). Revisit when a fixed `rsa` ships.
+    { id = "RUSTSEC-2023-0071", reason = "rsa is used for verification only (ADR-0009)" },
     # proc-macro-error is unmaintained (no vulnerability). It reaches the tree as a proc macro of
     # winprint's fmt-derive (craft-print's Windows spooler), so it runs at compile time on Windows
     # and is not in the binary.
@@ -57,6 +62,11 @@ ignore = [
     { id = "RUSTSEC-2026-0370", reason = "zvariant unmaintained; Linux a11y stack via accesskit_unix" },
     { id = "RUSTSEC-2026-0371", reason = "zbus_names unmaintained; Linux a11y stack via accesskit_unix" },
     { id = "RUSTSEC-2026-0372", reason = "zvariant_derive unmaintained; Linux a11y stack via accesskit_unix" },
+    # chrono is unmaintained (no vulnerability, every version affected, no release to move to).
+    # The Rust house rules require time to go through chrono, and craft-libs (craft-pdf,
+    # craft-pkcs7, craft-mime, craft-update) depend on it, so a successor is chosen in
+    # craft-contrib's standards/house-rules-rust.md first. Revisit when that names one (#7647).
+    { id = "RUSTSEC-2026-0543", reason = "chrono unmaintained; required by the Rust house rules and craft-libs (#7647)" },
 ]
 
 # egui's default UI fonts (Ubuntu-Light, Hack, emoji-icon-font): font licences on the AGENTS.md
