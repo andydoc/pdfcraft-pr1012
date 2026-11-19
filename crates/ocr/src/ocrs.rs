@@ -159,14 +159,18 @@ pub struct Ocr {
     /// detector. Models loaded from bytes (the web build) have none: reading in a language or
     /// finding the orientation then reports the models missing.
     multilingual: Option<super::multilingual::Multilingual>,
+    /// The detection model's fixed input size, (width, height) pixels, when it declares one: a
+    /// page much larger than that is detected in tiles.
+    pub(crate) detector_input: Option<(u32, u32)>,
 }
 
 impl Ocr {
     pub fn load(models: &Models) -> Result<Ocr, OcrError> {
         let load = |p: &Path| rten::Model::load_file(p).map_err(|e| OcrError::Load(p.display().to_string(), e.to_string()));
-        let engine = Self::engine(load(&models.detection)?, load(&models.recognition)?)?;
+        let mut ocr = Self::with_models(load(&models.detection)?, load(&models.recognition)?)?;
         let dir = models.recognition.parent().ok_or(OcrError::NoModels)?;
-        Ok(Ocr { engine, multilingual: Some(super::multilingual::Multilingual::load(dir)?) })
+        ocr.multilingual = Some(super::multilingual::Multilingual::load(dir)?);
+        Ok(ocr)
     }
 
     /// Load the models from the contents of their files, where there is no file system (the web
@@ -178,19 +182,20 @@ impl Ocr {
             }
             rten::Model::load(data).map_err(|e| OcrError::Load(name.into(), e.to_string()))
         };
-        let engine =
-            Self::engine(load(DETECTION_MODEL, DETECTION_MODEL_SHA256, detection)?, load(RECOGNITION_MODEL, RECOGNITION_MODEL_SHA256, recognition)?)?;
-        Ok(Ocr { engine, multilingual: None })
+        Self::with_models(load(DETECTION_MODEL, DETECTION_MODEL_SHA256, detection)?, load(RECOGNITION_MODEL, RECOGNITION_MODEL_SHA256, recognition)?)
     }
 
-    fn engine(detection: rten::Model, recognition: rten::Model) -> Result<ocrs::OcrEngine, OcrError> {
+    /// The ocrs engine over `detection` and `recognition`, without the multilingual models.
+    fn with_models(detection: rten::Model, recognition: rten::Model) -> Result<Ocr, OcrError> {
+        let detector_input = detector_input(&detection);
         let params = ocrs::OcrEngineParams {
             detection_model: Some(detection),
             recognition_model: Some(recognition),
             alphabet: Some(ALPHABET.into()),
             ..Default::default()
         };
-        ocrs::OcrEngine::new(params).map_err(|e| OcrError::Load("ocr engine".into(), e.to_string()))
+        let engine = ocrs::OcrEngine::new(params).map_err(|e| OcrError::Load("ocr engine".into(), e.to_string()))?;
+        Ok(Ocr { engine, multilingual: None, detector_input })
     }
 
     /// Load the models found by [`Models::find`].
@@ -213,7 +218,7 @@ impl Ocr {
         let err = |e: &dyn std::fmt::Display| OcrError::Recognize(e.to_string());
         let source = ocrs::ImageSource::from_bytes(&rgb, (width, height)).map_err(|e| err(&e))?;
         let input = self.engine.prepare_input(source).map_err(|e| err(&e))?;
-        let found = self.engine.detect_words(&input).map_err(|e| err(&e))?;
+        let found = self.detect_words(&rgb, width, height, &input)?;
         let mut lines = self.engine.find_text_lines(&input, &found);
         let before: Vec<Option<RectF>> = lines.iter_mut().map(|l| pad_line(l)).collect();
         let read = self.engine.recognize_text(&input, &lines).map_err(|e| err(&e))?;
@@ -248,7 +253,8 @@ impl Ocr {
         let err = |e: &dyn std::fmt::Display| OcrError::Recognize(e.to_string());
         let source = ocrs::ImageSource::from_bytes(image.as_raw(), image.dimensions()).map_err(|e| err(&e))?;
         let input = self.engine.prepare_input(source).map_err(|e| err(&e))?;
-        let found = self.engine.detect_words(&input).map_err(|e| err(&e))?;
+        // Tiled on a large page of small print, as `recognize` is.
+        let found = self.detect_words(image.as_raw(), image.width(), image.height(), &input)?;
         let boxes = self.engine.find_text_lines(&input, &found);
         let lines: Vec<_> = boxes
             .into_iter()
@@ -288,6 +294,40 @@ impl Ocr {
     pub fn orientation(&self, image: &image::RgbImage) -> Result<u16, OcrError> {
         self.multilingual.as_ref().ok_or(OcrError::NoModels)?.orientation(image)
     }
+
+    /// The words in a page, `rgb` (1 or 3 bytes per pixel) prepared as `page`. A page at least
+    /// twice the detector's input along an axis whose text is small once shrunk to that input
+    /// ([`crate::pitch`]) is detected in overlapping tiles ([`crate::tiles`]), each word kept by the
+    /// tile whose core holds its centre and moved back to page pixels.
+    fn detect_words(&self, rgb: &[u8], width: u32, height: u32, page: &ocrs::OcrInput) -> Result<Vec<RotatedRect>, OcrError> {
+        let err = |e: &dyn std::fmt::Display| OcrError::Recognize(e.to_string());
+        let tiles = self.detector_input.map(|input| crate::tiles::tiles(width, height, input)).unwrap_or_default();
+        let area = (width as usize).checked_mul(height as usize).filter(|&a| a > 0);
+        let channels = area.and_then(|a| rgb.len().is_multiple_of(a).then(|| rgb.len() / a)).filter(|c| matches!(c, 1 | 3));
+        let (Some(channels), Some(input), true) = (channels, self.detector_input, tiles.len() > 1) else {
+            return self.engine.detect_words(page).map_err(|e| err(&e));
+        };
+        // Large print reads as well whole, at a quarter of the detection time.
+        if !crate::pitch::lines(rgb, width, height, channels, input).wants_tiles() {
+            return self.engine.detect_words(page).map_err(|e| err(&e));
+        }
+        let mut words = Vec::new();
+        for tile in &tiles {
+            let pixels = crate::tiles::crop(rgb, width, channels, tile.crop)
+                .ok_or_else(|| OcrError::Recognize("a detection tile lies outside the page".into()))?;
+            let source = ocrs::ImageSource::from_bytes(&pixels, (tile.width(), tile.height())).map_err(|e| err(&e))?;
+            let input = self.engine.prepare_input(source).map_err(|e| err(&e))?;
+            let (dx, dy) = (tile.crop[0] as f32, tile.crop[1] as f32);
+            for word in self.engine.detect_words(&input).map_err(|e| err(&e))? {
+                let centre = word.center();
+                let (x, y) = (centre.x + dx, centre.y + dy);
+                if tile.owns(x, y) {
+                    words.push(RotatedRect::new(rten_imageproc::PointF::from_yx(y, x), word.up_axis(), word.width(), word.height()));
+                }
+            }
+        }
+        Ok(words)
+    }
 }
 
 /// Whether `line` is read straightened. Only when its baseline climbs more than a quarter of
@@ -305,6 +345,17 @@ fn reading_direction(word: &rten_imageproc::RotatedRect) -> ([f32; 2], f32) {
     let up = word.up_axis();
     let side = up.perpendicular();
     if side.x.abs() >= side.y.abs() { ([side.x, side.y], word.width()) } else { ([up.x, up.y], word.height()) }
+}
+
+/// The detection model's input size, (width, height) pixels, if its input is an NCHW image of a
+/// fixed size.
+fn detector_input(model: &rten::Model) -> Option<(u32, u32)> {
+    let id = *model.input_ids().first()?;
+    let shape = model.node_info(id)?.shape()?;
+    match shape.as_slice() {
+        [_, _, rten::Dimension::Fixed(h), rten::Dimension::Fixed(w)] => Some((u32::try_from(*w).ok()?, u32::try_from(*h).ok()?)),
+        _ => None,
+    }
 }
 
 /// The ocrs engine as a [`Recognizer`] (the default engine).

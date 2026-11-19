@@ -11,6 +11,8 @@ repository.workspace = true
 workspace = true
 
 [dependencies]
+# Existing shared ASN.1 codec; PDF signature policy remains local.
+craft-pkcs7 = { version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "bc4aae37bb219049596327fca971046dab0b78be" }
 pdfcraft-cos = { workspace = true }
 pdfcraft-annot = { workspace = true }
 pdfcraft-content = { workspace = true }
@@ -32,7 +34,7 @@ bp384 = { version = "0.14", default-features = false, features = ["arithmetic", 
 ecdsa = { version = "0.17", default-features = false, features = ["algorithm", "der"] }
 # Verification only on native targets (RSA private-key operations use aws-lc-rs, ADR-0009).
 crypto-bigint = { version = "0.7", default-features = false, features = ["alloc"] }
-rsa = { version = "=0.10.0", default-features = false, features = ["std", "hazmat"] }
+rsa = { version = "=0.10.0-rc.18", default-features = false, features = ["std", "hazmat"] }
 pbkdf2 = { version = "0.13", default-features = false, features = ["hmac"] }
 hmac = "0.13"
 aes = "0.9"

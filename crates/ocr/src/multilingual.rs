@@ -207,47 +207,73 @@ impl Multilingual {
         let steps = shape[1];
         let classes = shape[2];
         let values: Vec<f32> = output.iter().copied().collect();
-        let mut words = Vec::new();
-        let (mut text, mut previous, mut start, mut end, mut confidence, mut count) = (String::new(), 0, 0, 0, 0.0, 0);
         let scale = width as f32 / rw as f32 * w as f32 / steps.max(1) as f32;
-        let flush = |words: &mut Vec<(String, f32, f32, f32)>, text: &mut String, start: usize, end: usize, confidence: f32, count: usize| {
-            let mean = confidence / count.max(1) as f32;
-            if !text.is_empty() && mean >= 0.5 {
-                words.push((std::mem::take(text), start as f32 * scale, ((end + 1) as f32 * scale).min(w as f32), mean));
+        let allowed = decoder_mask(language, &self.latin_alphabet);
+        Ok(decode(&values, classes, &self.alphabet, allowed, scale, w as f32, h as f32))
+    }
+}
+
+/// Greedy CTC decoding of the recognizer's per-step class scores (`classes` per step) into
+/// words: their text, horizontal extent in the line image's pixels (`scale` pixels a step,
+/// clipped to `width`) and mean character confidence (0 to 1). A word ends at a space, and
+/// also at a blank stretch wider than `wide_gap` pixels (the line image's height): letters of
+/// one word never stand that far apart, but the recognizer can read two words either side of
+/// something it skips, such as a check box, with no space between them.
+fn decode(
+    values: &[f32],
+    classes: usize,
+    alphabet: &[String],
+    allowed: Option<&[bool]>,
+    scale: f32,
+    width: f32,
+    wide_gap: f32,
+) -> Vec<(String, f32, f32, f32)> {
+    let mut words = Vec::new();
+    if classes == 0 {
+        return words;
+    }
+    let (mut text, mut previous, mut start, mut end, mut confidence, mut count) = (String::new(), 0, 0, 0, 0.0, 0);
+    let flush = |words: &mut Vec<(String, f32, f32, f32)>, text: &mut String, start: usize, end: usize, confidence: f32, count: usize| {
+        let mean = confidence / count.max(1) as f32;
+        if !text.is_empty() && mean >= 0.5 {
+            words.push((std::mem::take(text), start as f32 * scale, ((end + 1) as f32 * scale).min(width), mean));
+        } else {
+            text.clear();
+        }
+    };
+    for (step, row) in values.chunks_exact(classes).enumerate() {
+        if step as f32 * scale >= width {
+            break;
+        }
+        let Some((index, &score)) = best_class(row, allowed) else { continue };
+        if index != 0 && index != previous {
+            let Some(ch) = alphabet.get(index) else { continue };
+            if ch.trim().is_empty() {
+                flush(&mut words, &mut text, start, end, confidence, count);
+                confidence = 0.0;
+                count = 0;
             } else {
-                text.clear();
-            }
-        };
-        for (step, row) in values.chunks_exact(classes).enumerate() {
-            if step as f32 * scale >= w as f32 {
-                break;
-            }
-            let allowed = decoder_mask(language, &self.latin_alphabet);
-            let Some((index, &score)) = best_class(row, allowed) else { continue };
-            if index != 0 && index != previous {
-                let Some(ch) = self.alphabet.get(index) else { continue };
-                if ch.trim().is_empty() {
+                if !text.is_empty() && step.saturating_sub(end) as f32 * scale > wide_gap {
                     flush(&mut words, &mut text, start, end, confidence, count);
                     confidence = 0.0;
                     count = 0;
-                } else {
-                    if text.is_empty() {
-                        start = step;
-                    }
-                    text.push_str(ch);
-                    end = step;
-                    confidence += score;
-                    count += 1;
                 }
-            }
-            if index != 0 && index == previous && !text.is_empty() {
+                if text.is_empty() {
+                    start = step;
+                }
+                text.push_str(ch);
                 end = step;
+                confidence += score;
+                count += 1;
             }
-            previous = index;
         }
-        flush(&mut words, &mut text, start, end, confidence, count);
-        Ok(words)
+        if index != 0 && index == previous && !text.is_empty() {
+            end = step;
+        }
+        previous = index;
     }
+    flush(&mut words, &mut text, start, end, confidence, count);
+    words
 }
 
 /// A recognized word: the engine id is the recognizer's (`ocrs`), its confidence on the 0–100
@@ -317,6 +343,37 @@ mod tests {
         assert_eq!(word(&image, "x".into(), [20.0, 0.0, 40.0, 30.0], 0.9).rect, [20.0, 0.0, 40.0, 30.0]);
         assert_eq!(ink_rows(&image, [50.0, 0.0, 60.0, 30.0]), None);
         assert_eq!(ink_rows(&image, [f32::NAN, 0.0, 10.0, 30.0]), None);
+    }
+
+    /// Two words read with no space between them still part where the blank between them is
+    /// wider than the line is tall; a narrower blank (the gap between letters) keeps one word,
+    /// and a space parts words however close.
+    #[test]
+    fn decoding_parts_words_at_a_space_or_a_gap_wider_than_the_line() {
+        let alphabet: Vec<String> = ["", " ", "a", "b"].iter().map(|s| s.to_string()).collect();
+        // One row per step: `Some(class)` read there, `None` a blank.
+        let steps = |read: &[Option<usize>]| -> Vec<f32> {
+            read.iter()
+                .flat_map(|c| {
+                    let mut row = vec![0.0; alphabet.len()];
+                    row[c.unwrap_or(0)] = 0.9;
+                    row
+                })
+                .collect()
+        };
+        let texts = |read: &[Option<usize>]| -> Vec<(String, f32, f32)> {
+            decode(&steps(read), alphabet.len(), &alphabet, None, 2.0, 1000.0, 10.0).into_iter().map(|(t, s, e, _)| (t, s, e)).collect()
+        };
+        let mut far = vec![Some(2)];
+        far.extend([None; 6]);
+        far.push(Some(3));
+        assert_eq!(texts(&far), [("a".to_string(), 0.0, 2.0), ("b".to_string(), 14.0, 16.0)], "a 12 px blank parts a 10 px line");
+        let mut near = vec![Some(2)];
+        near.extend([None; 3]);
+        near.push(Some(3));
+        assert_eq!(texts(&near), [("ab".to_string(), 0.0, 10.0)], "an 8 px blank is inside a word");
+        assert_eq!(texts(&[Some(2), Some(1), Some(3)]), [("a".to_string(), 0.0, 2.0), ("b".to_string(), 4.0, 6.0)]);
+        assert!(decode(&steps(&far), 0, &alphabet, None, 2.0, 1000.0, 10.0).is_empty(), "no classes, no words");
     }
 
     #[test]
