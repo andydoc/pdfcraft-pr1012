@@ -1,0 +1,66 @@
+# storytold/craft-libs `crates/pkcs7` at bc4aae37bb219049596327fca971046dab0b78be, flattened out of its
+# workspace: version, edition, licence, repository, rust-version, lints and the two workspace
+# dependencies are spelled out here. One change from upstream: the rsa requirement is raised from
+# =0.10.0-rc.18 to 0.10.0, the first release that fixes RUSTSEC-2023-0071 (Marvin attack). Everything
+# else, tests included, matches upstream. See vendor/README.md.
+[package]
+name = "craft-pkcs7"
+description = "The formats of digital signatures: ASN.1 DER, X.509 certificates and chains, CMS SignedData (PKCS #7), PKCS #12 identity files, RFC 3161 timestamps, and CRL / OCSP revocation evidence, read, verified and written."
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+rust-version = "1.95"
+repository = "https://github.com/storytold/craft-libs"
+
+[lints.rust]
+unsafe_code = "forbid"
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(craft_pdf_unicode_fixtures)"] }
+
+[lints.clippy]
+cognitive_complexity = "deny"
+too_many_arguments = "deny"
+wildcard_imports = "deny"
+dbg_macro = "warn"
+todo = "warn"
+
+# Every dependency here is MIT OR Apache-2.0 (RustCrypto, base64, chrono, thiserror), except
+# ed25519-dalek (BSD-3-Clause) and aws-lc-rs (ISC AND (Apache-2.0 OR ISC)), all on the allowlist.
+[dependencies]
+thiserror = "2"
+zeroize = "1"
+# ASN.1 UTCTime/GeneralizedTime conversion goes through chrono (no hand-rolled calendar code).
+chrono = { version = "0.4.45", default-features = false, features = ["std"] }
+base64 = "0.23"
+sha1 = "0.11"
+sha2 = "0.11"
+sha3 = "0.12.0"
+ripemd = "0.2.0"
+p256 = { version = "0.14", default-features = false, features = ["ecdsa", "std"] }
+p384 = { version = "0.14", default-features = false, features = ["ecdsa", "std"] }
+# Verification only: P-521 and the Brainpool curves German qualified-signature cards use.
+p521 = { version = "0.14", default-features = false, features = ["ecdsa", "std"] }
+bp256 = { version = "0.14", default-features = false, features = ["arithmetic", "ecdsa", "std"] }
+bp384 = { version = "0.14", default-features = false, features = ["arithmetic", "ecdsa", "std"] }
+ecdsa = { version = "0.17", default-features = false, features = ["algorithm", "der"] }
+ed25519-dalek = "3.0.0"
+# Verification only on native targets (RSA private-key operations use aws-lc-rs).
+crypto-bigint = { version = "0.7.11", default-features = false, features = ["alloc"] }
+rsa = { version = "0.10.0", default-features = false, features = ["std", "hazmat"] }
+pbkdf2 = { version = "0.13", default-features = false, features = ["hmac"] }
+hmac = "0.13"
+aes = "0.9"
+cbc = { version = "0.2", features = ["alloc", "block-padding"] }
+des = "0.9"
+rc2 = "0.9"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+aws-lc-rs = { version = "1.18", default-features = false, features = ["aws-lc-sys", "prebuilt-nasm"] }
+getrandom = "0.4"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+# crypto-bigint asks for randomness; in the browser it comes from Web Crypto.
+getrandom = { version = "0.4", features = ["wasm_js"] }
+
+[[test]]
+name = "it"
+path = "tests/it/main.rs"

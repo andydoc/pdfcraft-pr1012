@@ -163,6 +163,8 @@ codegen-units = 1
 # Dropdown lists stop at the foot of the monitor (see vendor/README.md); meant to go upstream.
 [patch."https://github.com/storytold/craft-libs"]
 craft-ui = { path = "vendor/craft-ui" }
+# rsa 0.10.0 (RUSTSEC-2023-0071) in place of upstream's =0.10.0-rc.18 pin (see vendor/README.md); meant to go upstream.
+craft-pkcs7 = { path = "vendor/craft-pkcs7" }
 
 # Vendored, patched third-party crates (see vendor/README.md). Each patch is meant to go upstream.
 [patch.crates-io]
