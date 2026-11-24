@@ -46,6 +46,10 @@ jobs:
       # A missing oracle fails the job instead of printing a skip notice that reads as a pass.
       linux-env: PDFCRAFT_ORACLES_REQUIRED=1
       windows-env: PDFCRAFT_REQUIRE_WINRES=1
+      # Fork only: a Windows leg with no Rust cache (any Cargo.lock change) builds and tests for
+      # over 60 minutes, is cancelled, and so never saves the cache that would make it shorter.
+      # 90 lets that first run finish; warm runs still take about 40.
+      timeout-minutes: 90
       # Preserve the packaging regression check removed from git-sources in #7042.
       command: |
         pwsh -NoProfile -File packaging/windows/test-font-notices.ps1
