@@ -1267,7 +1267,7 @@ fn batch_summary(ok: usize, words: usize, skipped: usize, failed: &[String], not
 /// otherwise English, as the other language pickers do ([`crate::i18n::Lang::picker_name`]).
 /// egui 0.37 panics on a glyph no face has, and an English-only build without an embedded or
 /// installed Chinese face cannot draw `简体中文`.
-fn language_name(ctx: &egui::Context, code: &str, native: &'static str) -> &'static str {
+pub(super) fn language_name(ctx: &egui::Context, code: &str, native: &'static str) -> &'static str {
     let english = match code {
         "ja" => "Japanese",
         "zh-Hant" => "Traditional Chinese",

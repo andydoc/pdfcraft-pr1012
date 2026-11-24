@@ -155,7 +155,7 @@ fn correct_scanned_pages_offers_correction_without_recognition() {
         }
     });
     h.run_steps(4);
-    assert!(h.state_mut().execute(&egui::Context::default(), "ocr.correct_scan"));
+    assert!(h.execute("ocr.correct_scan"));
     h.run_steps(2);
     // The dialog opens on the corrections, with recognition off: its OK says so.
     h.get_by_label("Correct scans");

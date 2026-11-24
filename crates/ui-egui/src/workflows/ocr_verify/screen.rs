@@ -148,8 +148,8 @@ fn centre(app: &mut PdfCraftApp, ui: &mut Ui, n: &mut Intents) {
 }
 
 /// The language dropdown's text: its name and its code ("English (en)").
-fn language_name(code: &str, name: &str) -> String {
-    format!("{name} ({code})")
+fn language_name(ctx: &egui::Context, code: &str, name: &'static str) -> String {
+    format!("{} ({code})", ocr_ui::language_name(ctx, code, name))
 }
 
 /// The Engine dropdown's entries. An engine that cannot run is disabled and says why; the others
@@ -201,7 +201,7 @@ fn options_bar(app: &mut PdfCraftApp, ui: &mut Ui, n: &mut Intents) {
     let page_done = review && v.review.verified_pages.contains(&v.current);
 
     let languages: Vec<Entry<String>> =
-        pdfcraft_engine::ocr::LANGUAGES.iter().map(|(code, name)| Entry::new((*code).to_string(), language_name(code, name))).collect();
+        pdfcraft_engine::ocr::LANGUAGES.iter().map(|(code, name)| Entry::new((*code).to_string(), language_name(ui.ctx(), code, name))).collect();
     let engines = engine_entries();
     let strategies = [
         (MergeStrategy::PrimaryOnly, tl!("Use the chosen engine's reading alone")),
