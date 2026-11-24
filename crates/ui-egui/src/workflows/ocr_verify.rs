@@ -801,7 +801,7 @@ impl OcrVerify {
                     .filter(|(i, w)| !self.review.removed.contains(&(p.page, *i)) && !w.text.trim().is_empty())
                     .map(|(_, w)| w.clone())
                     .collect(),
-           , ..Default::default() })
+            })
             .collect()
     }
 

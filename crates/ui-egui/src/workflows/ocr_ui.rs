@@ -1433,7 +1433,7 @@ mod tests {
     #[test]
     fn batch_recognition_adds_text_after_correct_scanned_pages() {
         let mut app = app_with(scan());
-        assert!(app.execute("ocr.correct_scan"));
+        assert!(app.execute(&egui::Context::default(), "ocr.correct_scan"));
         assert!(!app.ocr_draft.settings().recognize);
         let batch = app.ocr_draft.batch_settings();
         assert!(batch.recognize && batch.skip_text_pages, "{batch:?}");
