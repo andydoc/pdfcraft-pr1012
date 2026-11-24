@@ -9429,8 +9429,8 @@ fn ocr_tools_make_a_scan_searchable() {
         assert!(why.to_string().contains("tesseract"), "{why}");
     }
     // ocr_words: the recognition's words with confidence, band and suspects, changing nothing.
-    // ocrs reports no confidences, so `auto` + a confidence merge is asked for when the second
-    // engine is there to supply them; without it confidence and band are honestly null.
+    // `auto` + a confidence merge is asked for when the second engine is there; without it the
+    // ocrs path reports the multilingual recognizer's own mean character confidence and band.
     ok(&mut a, "doc_close", json!({ "doc": scan, "discard_changes": true }));
     let scan = ok(&mut a, "doc_create", json!({ "from": "images", "paths": [png.to_string_lossy()] }))["doc"].as_u64().unwrap();
     let mut args = json!({ "doc": scan });
@@ -9451,7 +9451,8 @@ fn ocr_tools_make_a_scan_searchable() {
             .count();
         assert!(with_confidence >= 4, "the second engine's confidences arrive: {words}");
     } else {
-        assert!(first["confidence"].is_null() && first["band"].is_null() && first["suspect"] == false, "{words}");
+        let confidence = first["confidence"].as_f64().unwrap_or(-1.0);
+        assert!((0.0..=100.0).contains(&confidence) && first["band"].is_string(), "{words}");
     }
     assert!(a.call("edit_undo", &json!({ "doc": scan })).is_err(), "ocr_words changes nothing, so there is no undo");
 }
