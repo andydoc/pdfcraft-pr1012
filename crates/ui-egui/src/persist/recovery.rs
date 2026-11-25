@@ -307,6 +307,7 @@ mod idle_tests {
     use std::time::Duration;
 
     use craft::host::{AppInfo, Host, ManualJobs, ScriptedFiles};
+    #[cfg(unix)] // Only the FIFO test, which is Unix-only, opens a store directly.
     use craft::platform::autosave::RecoveryStore;
 
     pub(super) struct TestDir(PathBuf);
