@@ -1,4 +1,4 @@
-# storytold/craft-libs `crates/pkcs7` at bc4aae37bb219049596327fca971046dab0b78be, flattened out of its
+# storytold/craft-libs `crates/pkcs7` at 0a6e42b80bfd586aee6ee1144aa98cf1ea37a844, flattened out of its
 # workspace: version, edition, licence, repository, rust-version, lints and the two workspace
 # dependencies are spelled out here. One change from upstream: the rsa requirement is raised from
 # =0.10.0-rc.18 to 0.10.0, the first release that fixes RUSTSEC-2023-0071 (Marvin attack). Everything
